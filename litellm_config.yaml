@@ -1,0 +1,56 @@
+router_settings:
+  # This tells LiteLLM to default to Anthropic's actual API 
+  # if the model name isn't one of your NVIDIA ones.
+  default_fallback: 
+    - model: "claude-3-5-sonnet-20241022"
+      api_base: "https://api.anthropic.com/v1"
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+
+model_list:
+  # Your default fallback
+  - model_name: "nvidia-agent"
+    litellm_params:
+      model: "openai/nvidia/nemotron-4-340b-instruct"
+      api_base: "https://integrate.api.nvidia.com/v1"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  # Menu Option 1
+  - model_name: "meta/llama-3.1-405b-instruct"
+    litellm_params:
+      model: "openai/meta/llama-3.1-405b-instruct"
+      api_base: "https://integrate.api.nvidia.com/v1"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  # Menu Option 2
+  - model_name: "nvidia/nemotron-4-340b-instruct"
+    litellm_params:
+      model: "openai/nvidia/nemotron-4-340b-instruct"
+      api_base: "https://integrate.api.nvidia.com/v1"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  # Menu Option 3
+  - model_name: "mistralai/mixtral-8x22b-instruct-v0.1"
+    litellm_params:
+      model: "openai/mistralai/mixtral-8x22b-instruct-v0.1"
+      api_base: "https://integrate.api.nvidia.com/v1"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  # Menu Option 4
+  - model_name: "microsoft/phi-3-medium-4k-instruct"
+    litellm_params:
+      model: "openai/microsoft/phi-3-medium-4k-instruct"
+      api_base: "https://integrate.api.nvidia.com/v1"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  # Menu Option 5
+  - model_name: "google/gemma-2-27b-it"
+    litellm_params:
+      model: "openai/google/gemma-2-27b-it"
+      api_base: "https://integrate.api.nvidia.com/v1"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
