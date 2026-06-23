@@ -6,67 +6,100 @@ router_settings:
   model_group_alias:
     "claude-3-5-sonnet-20241022": "nvidia-agent"
     "claude-3-5-sonnet-latest": "nvidia-agent"
-    "claude-3-5-sonnet-20240620": "nvidia-agent"  # Catch older sonnet requests
-    "claude-3-sonnet-20240229": "nvidia-agent"    # Catch v3 sonnet requests
+    "claude-3-5-sonnet-20240620": "nvidia-agent"
+    "claude-3-sonnet-20240229": "nvidia-agent"
     "claude-sonnet-4-6": "nvidia-agent"
-    "anthropic_sonnet": "nvidia-agent"            # Explicit internal fallback name
+    "anthropic_sonnet": "nvidia-agent"
     
     "claude-3-5-haiku-20241022": "nvidia-fast-agent"
     "claude-3-5-haiku-latest": "nvidia-fast-agent"
     "claude-haiku-4-6": "nvidia-fast-agent"
-    "anthropic_haiku": "nvidia-fast-agent"        # Explicit internal fallback name
+    "anthropic_haiku": "nvidia-fast-agent"
+
+  enable_pre_call_checks: true
+  num_retries: 3
+  
+  fallbacks:
+    - nvidia-agent: ["nvidia-agent-fallback-1", "nvidia-agent-fallback-2", "nvidia-agent-fallback-3"]
+    - nvidia-fast-agent: ["nvidia-fast-agent-fallback-1", "nvidia-fast-agent-fallback-2", "nvidia-fast-agent-fallback-3"]
+
+  # Fallbacks for context window limit exceeded
+  context_window_fallbacks:
+    - nvidia-agent: ["nvidia-agent-fallback-1", "nvidia-agent-fallback-2", "nvidia-agent-fallback-3"]
+    - nvidia-fast-agent: ["nvidia-fast-agent-fallback-1", "nvidia-fast-agent-fallback-2", "nvidia-fast-agent-fallback-3"]
 
 model_list:
-  # --- PRIMARY AGENTS (MULTIMODAL) ---
-  # Claude Code relies on vision capabilities for screenshots and UI analysis.
-  # We MUST use vision-instruct models here to avoid "not a multimodal model" errors.
+  # --- PRIMARY MULTIMODAL AGENTS (High quality, but capped at 32k context) ---
   
   - model_name: "nvidia-agent"
     litellm_params:
       model: "nvidia_nim/meta/llama-3.2-90b-vision-instruct"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
+    model_info:
+      max_input_tokens: 32768
       
   - model_name: "nvidia-fast-agent"
     litellm_params:
       model: "nvidia_nim/meta/llama-3.2-11b-vision-instruct"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
+    model_info:
+      max_input_tokens: 32768
 
-  # --- EXCELLENT TEXT MODELS ---
-  # Fallbacks or explicit model targets if configured in Claude Code manually
+  # --- QUALITY TEXT FALLBACKS (Large context windows, high availability) ---
   
-  - model_name: "llama-3.3-70b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      drop_params: true
-
-  - model_name: "mistral-large-3"
+  - model_name: "nvidia-agent-fallback-1"
     litellm_params:
       model: "nvidia_nim/mistralai/mistral-large-3-675b-instruct-2512"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
+    model_info:
+      max_input_tokens: 131072
 
-  - model_name: "qwen3-next-80b"
+  - model_name: "nvidia-agent-fallback-2"
     litellm_params:
       model: "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
+    model_info:
+      max_input_tokens: 131072
 
-  - model_name: "phi-4-mini"
+  - model_name: "nvidia-agent-fallback-3"
+    litellm_params:
+      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+    model_info:
+      max_input_tokens: 131072
+
+  # --- FAST TEXT FALLBACKS (Large context windows, fast/high availability) ---
+  
+  - model_name: "nvidia-fast-agent-fallback-1"
+    litellm_params:
+      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+    model_info:
+      max_input_tokens: 131072
+
+  - model_name: "nvidia-fast-agent-fallback-2"
     litellm_params:
       model: "nvidia_nim/microsoft/phi-4-mini-instruct"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
-      
-  - model_name: "gemma-2-2b-it"
+    model_info:
+      max_input_tokens: 40960
+
+  - model_name: "nvidia-fast-agent-fallback-3"
     litellm_params:
       model: "nvidia_nim/google/gemma-2-2b-it"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
+    model_info:
+      max_input_tokens: 8192
 
 litellm_settings:
-  num_retries: 5  # Tell LiteLLM to automatically wait and retry using exponential backoff when a 429 error occurs
+  num_retries: 5  # Global retries for rate limits
   callbacks:
     - custom_callbacks.proxy_handler_instance

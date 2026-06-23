@@ -3,6 +3,20 @@ import sys
 import json
 
 class CustomRateLimitLogger(CustomLogger):
+    async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type, **kwargs):
+        try:
+            # Clamp max_tokens to 4096 to prevent context window explosion
+            max_tokens = data.get("max_tokens")
+            if max_tokens is not None and max_tokens > 4096:
+                print(f"\n[CustomLogger] Clamping max_tokens from {max_tokens} to 4096")
+                data["max_tokens"] = 4096
+                sys.stdout.flush()
+        except Exception as e:
+            print(f"\n[CustomLogger] Error in pre_call_hook: {e}", file=sys.stderr)
+            sys.stderr.flush()
+        
+        return data
+
     def log_failure_event(self, kwargs, response_obj, start_time, end_time):
         try:
             self._log_failure(kwargs, response_obj)
