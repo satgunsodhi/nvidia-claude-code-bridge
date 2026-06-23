@@ -6,67 +6,67 @@ router_settings:
   model_group_alias:
     "claude-3-5-sonnet-20241022": "nvidia-agent"
     "claude-3-5-sonnet-latest": "nvidia-agent"
+    "claude-3-5-sonnet-20240620": "nvidia-agent"  # Catch older sonnet requests
+    "claude-3-sonnet-20240229": "nvidia-agent"    # Catch v3 sonnet requests
+    "claude-sonnet-4-6": "nvidia-agent"
+    "anthropic_sonnet": "nvidia-agent"            # Explicit internal fallback name
+    
     "claude-3-5-haiku-20241022": "nvidia-fast-agent"
     "claude-3-5-haiku-latest": "nvidia-fast-agent"
-    "claude-sonnet-4-6": "nvidia-agent"
     "claude-haiku-4-6": "nvidia-fast-agent"
-
+    "anthropic_haiku": "nvidia-fast-agent"        # Explicit internal fallback name
 
 model_list:
-  # 1. Primary coding model (using Mistral Large 3 - Top Tier capability)
+  # --- PRIMARY AGENTS (MULTIMODAL) ---
+  # Claude Code relies on vision capabilities for screenshots and UI analysis.
+  # We MUST use vision-instruct models here to avoid "not a multimodal model" errors.
+  
   - model_name: "nvidia-agent"
+    litellm_params:
+      model: "nvidia_nim/meta/llama-3.2-90b-vision-instruct"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+      
+  - model_name: "nvidia-fast-agent"
+    litellm_params:
+      model: "nvidia_nim/meta/llama-3.2-11b-vision-instruct"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  # --- EXCELLENT TEXT MODELS ---
+  # Fallbacks or explicit model targets if configured in Claude Code manually
+  
+  - model_name: "llama-3.3-70b-instruct"
+    litellm_params:
+      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      drop_params: true
+
+  - model_name: "mistral-large-3"
     litellm_params:
       model: "nvidia_nim/mistralai/mistral-large-3-675b-instruct-2512"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
-      rpm: 40
 
-  # 2. Fast background model (using Llama 3.3 70B - Robust secondary)
-  - model_name: "nvidia-fast-agent"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      drop_params: true
-      rpm: 40
-
-
-
-  # 4. Cleaned & verified active NVIDIA models
-  - model_name: "qwen/qwen3.5"
+  - model_name: "qwen3-next-80b"
     litellm_params:
       model: "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
-      rpm: 40
 
-  - model_name: "meta/llama-3.3-70b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      drop_params: true
-      rpm: 40
-
-  - model_name: "mistralai/mixtral-8x7b-instruct-v0.1"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mixtral-8x7b-instruct-v0.1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      drop_params: true
-      rpm: 40
-
-  - model_name: "microsoft/phi-4-mini-instruct"
+  - model_name: "phi-4-mini"
     litellm_params:
       model: "nvidia_nim/microsoft/phi-4-mini-instruct"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
-      rpm: 40
-
-  - model_name: "google/gemma-2-2b-it"
+      
+  - model_name: "gemma-2-2b-it"
     litellm_params:
       model: "nvidia_nim/google/gemma-2-2b-it"
       api_key: "os.environ/NVIDIA_API_KEY"
       drop_params: true
-      rpm: 40
 
 litellm_settings:
+  num_retries: 5  # Tell LiteLLM to automatically wait and retry using exponential backoff when a 429 error occurs
   callbacks:
     - custom_callbacks.proxy_handler_instance
