@@ -4,6 +4,7 @@ general_settings:
 router_settings:
   # Map native Anthropic model names requested by Claude Code to NVIDIA agents
   model_group_alias:
+    "claude-3-opus-20240229": "nvidia-opus-agent"
     "claude-3-5-sonnet-20241022": "nvidia-agent"
     "claude-3-5-sonnet-latest": "nvidia-agent"
     "claude-3-5-sonnet-20240620": "nvidia-agent"
@@ -22,8 +23,9 @@ router_settings:
   # Common Class-Based Fallbacks for all models
   fallbacks:
     # Default Agents
-    - nvidia-agent: ["mistralai/mistral-large-3-675b-instruct-2512", "nvidia/llama-3.3-nemotron-super-49b-v1", "nvidia/nemotron-3-super-120b-a12b"]
-    - nvidia-fast-agent: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
+    - nvidia-opus-agent: ["nvidia_nim/moonshotai/kimi-k2.6", "z-ai/glm-5.1"]
+    - nvidia-agent: ["mistralai/mistral-large-3-675b-instruct-2512", "qwen/qwen3.5-397b-a17b"]
+    - nvidia-fast-agent: ["openai/gpt-oss-120b"]
 
     # --- Class A (Elite Heavyweight & Reasoning) Fallbacks ---
     - nvidia/nemotron-3-super-120b-a12b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
@@ -111,14 +113,24 @@ router_settings:
 
   # Fallbacks for context window limit exceeded (fallback to high capacity models)
   context_window_fallbacks:
-    - nvidia-agent: ["nvidia/nemotron-3-super-120b-a12b", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
-    - nvidia-fast-agent: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
+    - nvidia-opus-agent: ["z-ai/glm-5.1", "deepseek-ai/deepseek-v4-pro"]
+    - nvidia-agent: ["mistralai/mistral-large-3-675b-instruct-2512", "qwen/qwen3.5-397b-a17b"]
+    - nvidia-fast-agent: ["openai/gpt-oss-120b"]
 
 model_list:
   # --- PRIMARY AGENTS ---
+  - model_name: "nvidia-opus-agent"
+    litellm_params:
+      model: "deepseek-ai/deepseek-v4-pro"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      rpm: 40
+      drop_params: true
+    model_info:
+      max_input_tokens: 256000
+
   - model_name: "nvidia-agent"
     litellm_params:
-      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
+      model: "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"
       api_key: "os.environ/NVIDIA_API_KEY"
       rpm: 40
       drop_params: true
@@ -127,7 +139,7 @@ model_list:
       
   - model_name: "nvidia-fast-agent"
     litellm_params:
-      model: "nvidia_nim/microsoft/phi-4-mini-instruct"
+      model: "nvidia_nim/stepfun-ai/step-3.7-flash"
       api_key: "os.environ/NVIDIA_API_KEY"
       rpm: 40
       drop_params: true

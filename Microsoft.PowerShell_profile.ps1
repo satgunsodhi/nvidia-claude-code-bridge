@@ -2,7 +2,7 @@ function claude {
     [CmdletBinding(PositionalBinding=$false)]
     param(
         [Parameter(Mandatory=$false)]
-        [string]$Model = "nvidia-agent", # Default model if none specified
+        [string]$Model = "nvidia-opus-agent", 
         
         [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
         [string[]]$RemainingArgs
@@ -26,8 +26,6 @@ function claude {
     # 3. Set routing environment variables
     $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
     $env:ANTHROPIC_AUTH_TOKEN = "sk-dummy"
-    
-    # Dynamically inject the model chosen at runtime
     $env:ANTHROPIC_MODEL = $Model
 
     # Timeouts and stability fixes
@@ -35,18 +33,28 @@ function claude {
     $env:DISABLE_NON_ESSENTIAL_MODEL_CALLS = "1"
     $env:CLAUDE_CODE_CONNECT_TIMEOUT_MS = "0"
     $env:API_TIMEOUT_MS = "1200000"
-    $env:CLAUDE_CODE_USE_POWERSHELL_TOOL=1
+    $env:CLAUDE_CODE_SKIP_MODEL_CHECK = "1"
+
+    # --- CRITICAL BASH SWITCHES ---
+    # Disable PowerShell primary tool rollout
+    $env:CLAUDE_CODE_USE_POWERSHELL_TOOL = "0" 
+
+    # Force Claude to find and run via Git Bash executable (if not already on path)
+    # $env:CLAUDE_CODE_GIT_BASH_PATH = "C:\Program Files\Git\bin\bash.exe"
 
     # Give the proxy 5 seconds to spin up on Windows
     Start-Sleep -Seconds 5
 
-    Write-Host "Launching Claude Code using model: $Model" -ForegroundColor Green
+    Write-Host "Launching Claude Code via Git Bash using model: $Model" -ForegroundColor Green
 
-    # 4. Run the actual Claude executable, passing remaining flags (like --debug)
-    & claude.exe $RemainingArgs
-
-    # 5. Clean up background proxy on exit
-    if ($proxyProcess) {
-        Stop-Process -Id $proxyProcess.Id -Force -ErrorAction SilentlyContinue
+    # 4. Execute inside Try/Finally block to ensure proxy cleanup on Ctrl+C
+    try {
+        & claude.exe $RemainingArgs
+    }
+    finally {
+        if ($proxyProcess) {
+            Write-Host "Stopping LiteLLM proxy background process..." -ForegroundColor Gray
+            Stop-Process -Id $proxyProcess.Id -Force -ErrorAction SilentlyContinue
+        }
     }
 }

@@ -66,6 +66,25 @@ class CustomRateLimitLogger(CustomLogger):
 
             model_name = data.get("model", "unknown")
 
+            # --- Kimi K2.6 Overrides ---
+            if "kimi-k2.6" in model_name.lower():
+                data["temperature"] = 0.01
+                data["top_p"] = 0.70
+                data["max_tokens"] = 4096
+                data["stream"] = True
+
+                safety_system_override = "\n\nCRITICAL INSTRUCTION: You are an OpenAI-compatible completion tool. Do not generate XML tags like <search_and_replace> manually unless explicitly formatting a tool request. Return clean code. If you encounter string tokens you cannot parse, immediately stop and skip them."
+                
+                messages = data.get("messages", [])
+                for msg in messages:
+                    if msg.get("role") == "system":
+                        if isinstance(msg.get("content"), str):
+                            msg["content"] += safety_system_override
+                        elif isinstance(msg.get("content"), list):
+                            msg["content"].append({"type": "text", "text": safety_system_override})
+                        break
+            # ---------------------------
+
             # 2. Multimodal Protection & Warning
             messages = data.get("messages", [])
             if not is_vision_model(model_name) and messages:
@@ -101,6 +120,43 @@ class CustomRateLimitLogger(CustomLogger):
             sys.stderr.flush()
         
         return data
+
+    async def async_streaming_chunk_hook(self, user_api_key_dict, cache, data, call_type, chunk, **kwargs):
+        try:
+            if hasattr(chunk, "choices") and chunk.choices:
+                delta = chunk.choices[0].delta
+                if hasattr(delta, "reasoning_content"):
+                    delta.reasoning_content = None
+                # Handle pydantic v2 extra fields if any
+                if hasattr(delta, "__dict__") and "reasoning_content" in delta.__dict__:
+                    del delta.__dict__["reasoning_content"]
+            elif isinstance(chunk, dict) and "choices" in chunk and chunk["choices"]:
+                delta = chunk["choices"][0].get("delta", {})
+                if "reasoning_content" in delta:
+                    del delta["reasoning_content"]
+        except Exception:
+            pass
+        return chunk
+
+
+    async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
+        try:
+            model = kwargs.get("model", "unknown")
+            actual_model = kwargs.get("litellm_params", {}).get("model", "unknown")
+            print(f"\n[CustomLogger] SUCCESS: Mapped request '{model}' -> Actual downstream model used: '{actual_model}'")
+            sys.stdout.flush()
+        except Exception as e:
+            pass
+
+    def log_success_event(self, kwargs, response_obj, start_time, end_time):
+        try:
+            model = kwargs.get("model", "unknown")
+            actual_model = kwargs.get("litellm_params", {}).get("model", "unknown")
+            print(f"\n[CustomLogger] SUCCESS: Mapped request '{model}' -> Actual downstream model used: '{actual_model}'")
+            sys.stdout.flush()
+        except Exception as e:
+            pass
+
 
     def log_failure_event(self, kwargs, response_obj, start_time, end_time):
         try:
