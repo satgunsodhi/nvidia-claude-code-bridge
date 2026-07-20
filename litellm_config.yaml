@@ -31,6 +31,7 @@ router_settings:
     - nvidia/nemotron-3-super-120b-a12b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
     - nvidia/nemotron-3-ultra-550b-a55b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
     - nvidia/llama-3.3-nemotron-super-49b-v1: ["nvidia/nemotron-3-super-120b-a12b", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
+    - nvidia/llama-3.3-nemotron-super-49b-v1.5: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
     - mistralai/mistral-large-3-675b-instruct-2512: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "nvidia/nemotron-3-super-120b-a12b"]
     - mistralai/mistral-medium-3.5-128b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-3-675b-instruct-2512"]
     - mistralai/mistral-small-4-119b-2603: ["meta/llama-3.3-70b-instruct", "nvidia/llama-3.3-nemotron-super-49b-v1", "mistralai/mistral-large-3-675b-instruct-2512"]
@@ -77,6 +78,7 @@ router_settings:
     - bytedance/seed-oss-36b-instruct: ["microsoft/phi-4-mini-instruct", "google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
     - meta/llama-3.2-3b-instruct: ["meta/llama-3.2-1b-instruct", "google/gemma-2-2b-it", "microsoft/phi-4-mini-instruct"]
     - meta/llama-3.2-1b-instruct: ["meta/llama-3.2-3b-instruct", "google/gemma-2-2b-it", "microsoft/phi-4-mini-instruct"]
+    - meta/llama-4-maverick-17b-128e-instruct: ["meta/llama-3.3-70b-instruct", "microsoft/phi-4-mini-instruct", "google/gemma-4-31b-it"]
     - meta/llama-3.1-8b-instruct: ["microsoft/phi-4-mini-instruct", "google/gemma-4-31b-it", "meta/llama-3.2-3b-instruct"]
     - microsoft/phi-4-mini-instruct: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct", "meta/llama-3.2-3b-instruct"]
     - upstage/solar-10.7b-instruct: ["microsoft/phi-4-mini-instruct", "google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
@@ -106,6 +108,7 @@ router_settings:
     - nvidia/nv-embed-v1: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
     - nvidia/rerank-qa-mistral-4b: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
     - z-ai/glm-5.1: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
+    - z-ai/glm-5.2: ["z-ai/glm-5.1", "nvidia/llama-3.3-nemotron-super-49b-v1"]
     - meta/llama-guard-4-12b: ["nvidia/nemotron-3.5-content-safety", "nvidia/llama-3.3-nemotron-super-49b-v1"]
     - meta/esm2-650m: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
     - meta/esmfold: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
@@ -121,7 +124,7 @@ model_list:
   # --- PRIMARY AGENTS ---
   - model_name: "nvidia-opus-agent"
     litellm_params:
-      model: "deepseek-ai/deepseek-v4-pro"
+      model: "nvidia_nim/deepseek-ai/deepseek-v4-pro"
       api_key: "os.environ/NVIDIA_API_KEY"
       rpm: 40
       drop_params: true
@@ -400,6 +403,13 @@ model_list:
       rpm: 40
       drop_params: true
 
+  - model_name: "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+    litellm_params:
+      model: "nvidia_nim/nvidia/llama-3.3-nemotron-super-49b-v1.5"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      rpm: 40
+      drop_params: true
+
   - model_name: "nvidia/llama-3.1-nemotron-nano-8b-v1"
     litellm_params:
       model: "nvidia_nim/nvidia/llama-3.1-nemotron-nano-8b-v1"
@@ -541,6 +551,13 @@ model_list:
       rpm: 40
       drop_params: true
 
+  - model_name: "z-ai/glm-5.2"
+    litellm_params:
+      model: "nvidia_nim/z-ai/glm-5.2"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      rpm: 40
+      drop_params: true
+
   # ==========================================
   # qwen
   # ==========================================
@@ -595,6 +612,13 @@ model_list:
   # ==========================================
   # meta
   # ==========================================
+  - model_name: "meta/llama-4-maverick-17b-128e-instruct"
+    litellm_params:
+      model: "nvidia_nim/meta/llama-4-maverick-17b-128e-instruct"
+      api_key: "os.environ/NVIDIA_API_KEY"
+      rpm: 40
+      drop_params: true
+
   - model_name: "meta/llama-guard-4-12b"
     litellm_params:
       model: "nvidia_nim/meta/llama-guard-4-12b"
