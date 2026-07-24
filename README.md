@@ -85,10 +85,11 @@ The config currently aliases these Claude model families:
 
 Primary model groups:
 
-- `nvidia-agent` -> `nvidia_nim/meta/llama-3.2-90b-vision-instruct`
-- `nvidia-fast-agent` -> `nvidia_nim/meta/llama-3.2-11b-vision-instruct`
+- `nvidia-opus-agent` -> `nvidia_nim/deepseek-ai/deepseek-v4-pro`
+- `nvidia-agent` -> `nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b`
+- `nvidia-fast-agent` -> `nvidia_nim/stepfun-ai/step-3.7-flash`
 
-Fallback groups include Mistral Large, Qwen, Llama 3.3, Phi, and Gemma models as configured in `litellm_config.yaml`.
+The configuration includes all 118 models freely available on the NVIDIA NIM catalog, covering DeepSeek, Llama 3.3/3.2, Mistral, Qwen, Gemma, Phi, Minimax, StepFun, GLM 5.2, and specialized vision, safety, and embedding models. Fallback groups automatically route requests across equivalent classes if a primary model is unavailable.
 
 ## Custom callback behavior
 
