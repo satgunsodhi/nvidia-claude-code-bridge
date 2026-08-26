@@ -2,16 +2,41 @@ function claude {
     [CmdletBinding(PositionalBinding=$false)]
     param(
         [Parameter(Mandatory=$false)]
-        [string]$Model = "nvidia-opus-agent", 
+        [string]$Model, 
         
         [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
         [string[]]$RemainingArgs
     )
 
     # 1. Define paths
-    $yamlPath = "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge\litellm_config.yaml"
-    $venvDir = "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge\.venv"
+    $bridgeDir = "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge"
+    $yamlPath = "$bridgeDir\litellm_config.yaml"
+    $venvDir = "$bridgeDir\.venv"
+    $pythonExe = "$venvDir\Scripts\python.exe"
     $litellmExe = "$venvDir\Scripts\litellm.exe"
+    $envFile = "$bridgeDir\.env"
+
+    # Determine provider from .env if Model not specified
+    if (-not $Model) {
+        $provider = "kaggle"
+        if (Test-Path $envFile) {
+            $line = Get-Content $envFile | Where-Object { $_ -match "^\s*PRIMARY_PROVIDER\s*=" } | Select-Object -First 1
+            if ($line -match '=\s*"?([a-zA-Z0-9_-]+)"?') {
+                $provider = $matches[1].ToLower()
+            }
+        }
+        if ($provider -eq "nvidia") {
+            $Model = "nvidia-agent"
+        } else {
+            $Model = "kaggle-agent"
+        }
+    }
+
+    # Ensure Kaggle credentials are valid before launching if using Kaggle
+    if ($Model -like "kaggle*" -or -not (Test-Path "$bridgeDir\.kaggle_proxy.env")) {
+        Write-Host "Verifying Kaggle Model Proxy authentication..." -ForegroundColor Cyan
+        & $pythonExe "$bridgeDir\kaggle_auth.py" --status | Out-Null
+    }
 
     # 2. Start LiteLLM with explicit WorkingDirectory and log redirection
     $logOutPath = "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge\litellm_out.log"

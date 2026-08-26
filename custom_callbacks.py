@@ -4,6 +4,8 @@ import json
 import asyncio
 import time
 from collections import deque
+import os
+from kaggle_auth import kaggle_auth_manager
 
 class AsyncRateLimiter:
     def __init__(self, rpm: int = 40):
@@ -65,6 +67,40 @@ class CustomRateLimitLogger(CustomLogger):
                 sys.stdout.flush()
 
             model_name = data.get("model", "unknown")
+
+            # --- Dynamic Provider Selection (Configurable via .env PRIMARY_PROVIDER) ---
+            primary_provider = os.getenv("PRIMARY_PROVIDER", "kaggle").strip().lower()
+            if primary_provider == "nvidia":
+                if model_name in ("kaggle-agent", "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-latest", "claude-3-5-sonnet-20240620", "claude-3-sonnet-20240229", "claude-sonnet-4-6", "claude-sonnet-5", "anthropic_sonnet"):
+                    data["model"] = "nvidia-agent"
+                    model_name = "nvidia-agent"
+                elif model_name in ("kaggle-opus-agent", "claude-3-opus-20240229", "claude-3-opus-latest", "claude-opus-4-6", "anthropic_opus"):
+                    data["model"] = "nvidia-opus-agent"
+                    model_name = "nvidia-opus-agent"
+                elif model_name in ("kaggle-fast-agent", "claude-3-5-haiku-20241022", "claude-3-5-haiku-latest", "claude-3-haiku-20240307", "claude-haiku-4-6", "anthropic_haiku"):
+                    data["model"] = "nvidia-fast-agent"
+                    model_name = "nvidia-fast-agent"
+
+            # --- Dynamic Kaggle Credential Injection ---
+            api_base = data.get("api_base") or (data.get("litellm_params", {}).get("api_base") if isinstance(data.get("litellm_params"), dict) else "") or ""
+            is_kaggle_target = "kaggle" in model_name.lower() or "kaggle" in str(api_base).lower() or "mp-staging.kaggle.net" in str(api_base)
+            
+            if is_kaggle_target:
+                if not kaggle_auth_manager.is_token_valid():
+                    kaggle_auth_manager.refresh_credentials()
+                
+                active_key = kaggle_auth_manager.get_proxy_key()
+                active_url = kaggle_auth_manager.get_proxy_url()
+                
+                if active_key:
+                    data["api_key"] = active_key
+                    if "litellm_params" in data and isinstance(data["litellm_params"], dict):
+                        data["litellm_params"]["api_key"] = active_key
+                        if not data["litellm_params"].get("api_base"):
+                            data["litellm_params"]["api_base"] = active_url
+                    os.environ["KAGGLE_MODEL_PROXY_KEY"] = active_key
+                    os.environ["KAGGLE_MODEL_PROXY_URL"] = active_url
+            # -------------------------------------------
 
             # --- Kimi K2.6 Overrides ---
             if "kimi-k2.6" in model_name.lower():
@@ -150,7 +186,7 @@ class CustomRateLimitLogger(CustomLogger):
                 
             print(f"\n[CustomLogger] SUCCESS: Mapped request '{model}' -> Actual downstream model used: '{actual_model}'")
             sys.stdout.flush()
-        except Exception as e:
+        except Exception:
             pass
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
@@ -164,7 +200,7 @@ class CustomRateLimitLogger(CustomLogger):
                 
             print(f"\n[CustomLogger] SUCCESS: Mapped request '{model}' -> Actual downstream model used: '{actual_model}'")
             sys.stdout.flush()
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -190,11 +226,17 @@ class CustomRateLimitLogger(CustomLogger):
             status_code = exception.response.status_code
 
         model = kwargs.get("model", "unknown")
-        print(f"\n--- [CustomLogger] API Call Failure ---")
+        print("\n--- [CustomLogger] API Call Failure ---")
         print(f"Model: {model}")
         print(f"Status Code: {status_code}")
         print(f"Exception Type: {type(exception).__name__}")
-        print(f"Exception Message: {str(exception)}")
+        # Check for 401/403 Unauthorized on Kaggle to trigger immediate re-auth
+        if status_code in (401, 403) and ("kaggle" in model.lower() or "mp-staging.kaggle.net" in str(kwargs)):
+            print("\n\033[1;31m[KaggleAuth] 401/403 Detected: Upstream Kaggle token expired or rejected. Triggering credential refresh...\033[0m")
+            try:
+                kaggle_auth_manager.refresh_credentials(force=True)
+            except Exception as auth_err:
+                print(f"[KaggleAuth] Re-auth attempt failed: {auth_err}", file=sys.stderr)
 
         # Check for rate limit status (429) or rate limit strings in message
         is_rate_limit = (status_code == 429) or ("rate" in type(exception).__name__.lower()) or ("rate" in str(exception).lower())
@@ -259,7 +301,7 @@ class CustomRateLimitLogger(CustomLogger):
                         except Exception:
                             pass
 
-        print(f"-----------------------------------------\n")
+        print("-----------------------------------------\n")
         sys.stdout.flush()
 
 proxy_handler_instance = CustomRateLimitLogger()

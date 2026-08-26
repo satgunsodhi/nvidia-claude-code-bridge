@@ -1,5 +1,6 @@
 /.env
 /.venv
+/.kaggle_proxy.env
 
 **__pycache__
 

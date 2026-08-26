@@ -1,125 +1,84 @@
-# NVIDIA Claude Code Bridge
+# Claude Code Bridge (Kaggle Model Proxy & NVIDIA NIM)
 
-Use NVIDIA NIM models behind Claude Code by running LiteLLM as an Anthropic-compatible proxy.
+Use Kaggle Model Proxy ($10/day quota) and NVIDIA NIM models behind Claude Code by running LiteLLM as an Anthropic-compatible proxy.
 
-This repository contains a ready-to-edit LiteLLM configuration that maps Claude/Anthropic model names requested by Claude Code to NVIDIA NIM model groups, with retries, fallbacks, context-window fallbacks, and a small custom callback for safer request handling.
+This repository provides a complete proxy setup that maps Claude/Anthropic model names requested by Claude Code to upstream model groups with **automated short-lived credential rotation**, multi-tier fallbacks, and custom safety callbacks.
 
 ## What is included
 
-- `litellm_config.yaml` - LiteLLM proxy configuration for NVIDIA NIM.
-- `custom_callbacks.py` - LiteLLM callback that clamps overly large `max_tokens` requests to `4096` and logs rate-limit details.
-- `README.md` - setup and usage notes for this bridge.
+- `kaggle_auth.py` - Dynamic authentication manager that automatically refreshes Kaggle's short-lived (~1 hour) Model Proxy API keys before expiration.
+- `litellm_config.yaml` - LiteLLM proxy configuration with Anthropic model aliases, Kaggle and NVIDIA NIM model definitions, and multi-tier fallback chains.
+- `custom_callbacks.py` - LiteLLM callback for dynamic Kaggle token injection, 401/403 recovery, `max_tokens` clamping, and rate limit logging.
+- `Microsoft.PowerShell_profile.ps1` - PowerShell automation function to start the proxy and launch Claude Code seamlessly.
+- `README.md` - Setup and usage guide.
 
 ## How it works
 
-Claude Code sends requests for Anthropic model names such as `claude-3-5-sonnet-20241022` or `claude-3-5-haiku-20241022`.
+Claude Code sends requests for Anthropic model names such as `claude-3-5-sonnet-20241022` or `claude-3-opus-20240229`.
 
-LiteLLM receives those requests and uses `router_settings.model_group_alias` to route them to NVIDIA-backed model groups:
+LiteLLM receives those requests and routes them to primary Kaggle model groups:
 
-- Sonnet-style requests route to `nvidia-agent`.
-- Haiku-style requests route to `nvidia-fast-agent`.
-- Fallback models are used when the primary model is unavailable or the request exceeds the primary context window.
+| Claude Code Request | Primary Model Group | Upstream Model (Kaggle) | Fallback Models |
+| :--- | :--- | :--- | :--- |
+| `claude-3-opus-*` | `kaggle-opus-agent` | `deepseek-ai/deepseek-r1-0528` | `openai/gpt-5.4-nano`, `nvidia-opus-agent` (DeepSeek v4 Pro), `kimi-k2.6` |
+| `claude-3-5-sonnet-*` / `claude-sonnet-*` | `kaggle-agent` | `anthropic/claude-sonnet-5@default` | `google/gemini-3-flash-preview`, `nvidia-agent` (Nemotron 550B), `mistral-large-2` |
+| `claude-3-5-haiku-*` / `claude-haiku-*` | `kaggle-fast-agent` | `google/gemini-3-flash-preview` | `google/gemini-3.1-flash-lite-preview`, `nvidia-fast-agent` (Step 3.7 Flash), `llama-3.1-8b` |
 
-The primary multimodal models are configured with 32k token context windows. Text fallback models provide larger context windows where available.
+If a Kaggle model hits a rate limit (429) or quota restriction, LiteLLM automatically fails over across other authorized Kaggle models and NVIDIA NIM models.
 
 ## Requirements
 
-- Python 3.10 or newer
-- LiteLLM
-- An NVIDIA API key with access to the configured NIM models
-- Claude Code configured to use a custom Anthropic-compatible base URL
+- Python 3.10+
+- Kaggle CLI (`kaggle>=2.0.0`)
+- Kaggle API token (in `~/.kaggle/access_token` or `~/.kaggle/kaggle.json`)
+- NVIDIA API key (for NVIDIA NIM fallbacks)
+- Claude Code CLI
 
 ## Setup
 
-Install LiteLLM:
+1. **Activate the Python virtual environment**:
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
+
+2. **Verify Kaggle Authentication**:
+   ```powershell
+   python kaggle_auth.py --status
+   ```
+   If needed, force an immediate token refresh:
+   ```powershell
+   python kaggle_auth.py --refresh
+   ```
+
+3. **Start the LiteLLM Proxy manually**:
+   ```powershell
+   litellm --config .\litellm_config.yaml --port 4000
+   ```
+
+4. **Launch Claude Code**:
+   ```powershell
+   $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
+   $env:ANTHROPIC_API_KEY = "sk-dummy"
+   claude
+   ```
+
+## PowerShell Profile Integration
+
+You can copy the `claude` function from `Microsoft.PowerShell_profile.ps1` into your `$PROFILE`.
+Then, simply run:
 
 ```powershell
-pip install "litellm[proxy]"
-```
-
-Set your NVIDIA API key:
-
-```powershell
-$env:NVIDIA_API_KEY = "your-nvidia-api-key"
-```
-
-Start the LiteLLM proxy from the repository root:
-
-```powershell
-litellm --config .\litellm_config.yaml --port 4000
-```
-
-The proxy will listen at:
-
-```text
-http://localhost:4000
-```
-
-## Claude Code configuration
-
-Point Claude Code at the local LiteLLM proxy using Anthropic-compatible settings.
-
-For a PowerShell session:
-
-```powershell
-$env:ANTHROPIC_BASE_URL = "http://localhost:4000"
-$env:ANTHROPIC_API_KEY = "anything"
+# Launch Claude Code with default Kaggle Sonnet 5
 claude
+
+# Or choose a specific agent/model:
+claude -Model kaggle-opus-agent
+claude -Model nvidia-opus-agent
 ```
 
-`ANTHROPIC_API_KEY` is still required by Anthropic-compatible clients, but LiteLLM uses `NVIDIA_API_KEY` from `litellm_config.yaml` when calling NVIDIA NIM.
+## Dynamic Authentication Details
 
-## Model routing
-
-The config currently aliases these Claude model families:
-
-| Claude Code request | LiteLLM model group |
-| --- | --- |
-| `claude-3-5-sonnet-*` | `nvidia-agent` |
-| `claude-3-sonnet-*` | `nvidia-agent` |
-| `claude-sonnet-4-6` | `nvidia-agent` |
-| `anthropic_sonnet` | `nvidia-agent` |
-| `claude-3-5-haiku-*` | `nvidia-fast-agent` |
-| `claude-haiku-4-6` | `nvidia-fast-agent` |
-| `anthropic_haiku` | `nvidia-fast-agent` |
-
-Primary model groups:
-
-- `nvidia-opus-agent` -> `nvidia_nim/deepseek-ai/deepseek-v4-pro`
-- `nvidia-agent` -> `nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b`
-- `nvidia-fast-agent` -> `nvidia_nim/stepfun-ai/step-3.7-flash`
-
-The configuration includes all 118 models freely available on the NVIDIA NIM catalog, covering DeepSeek, Llama 3.3/3.2, Mistral, Qwen, Gemma, Phi, Minimax, StepFun, GLM 5.2, and specialized vision, safety, and embedding models. Fallback groups automatically route requests across equivalent classes if a primary model is unavailable.
-
-## Custom callback behavior
-
-`custom_callbacks.py` registers `proxy_handler_instance` with LiteLLM.
-
-It currently does two things:
-
-- Clamps `max_tokens` values above `4096` before the request is sent.
-- Prints detailed failure information, especially for `429` rate-limit responses.
-
-This is useful when Claude Code or another client asks for a large completion budget that would make NVIDIA NIM requests fail or behave unpredictably.
-
-## Troubleshooting
-
-If the proxy fails to start, check that:
-
-- `NVIDIA_API_KEY` is set in the same shell where you start LiteLLM.
-- LiteLLM can import `custom_callbacks.py` from the repository root.
-- The model names in `litellm_config.yaml` are available for your NVIDIA account.
-
-If Claude Code cannot connect, check that:
-
-- LiteLLM is still running on `http://localhost:4000`.
-- `ANTHROPIC_BASE_URL` points to the LiteLLM proxy.
-- Your terminal session has the expected environment variables.
-
-If requests fail with rate limits, inspect the callback output in the LiteLLM terminal. It prints status codes, exception details, response headers, and retry-related fields when available.
-
-## Editing the bridge
-
-To change routing, update `router_settings.model_group_alias` in `litellm_config.yaml`.
-
-To add or replace NVIDIA models, edit `model_list` and keep the corresponding fallback groups in sync.
+Kaggle Model Proxy tokens expire after 1 hour. `kaggle_auth.py` and `custom_callbacks.py` manage this automatically:
+- **Pre-Call Check**: Before each request, `async_pre_call_hook` verifies if the current token has at least 5 minutes remaining. If expired or expiring, it runs `kaggle benchmarks auth` in the background and updates the in-memory authorization header.
+- **401/403 Recovery**: If upstream responds with 401 or 403, the callback invalidates the cached key and force-refreshes immediately.
+- **No Proxy Restart Required**: Tokens are injected dynamically on every request without requiring LiteLLM to be restarted.
