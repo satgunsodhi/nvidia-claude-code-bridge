@@ -38,6 +38,15 @@ function claude {
         & $pythonExe "$bridgeDir\kaggle_auth.py" --status | Out-Null
     }
 
+    # Load Kaggle proxy environment variables into environment before starting LiteLLM
+    if (Test-Path "$bridgeDir\.kaggle_proxy.env") {
+        Get-Content "$bridgeDir\.kaggle_proxy.env" | ForEach-Object {
+            if ($_ -match '^\s*([A-Za-z0-9_]+)\s*=\s*(.*)$') {
+                [System.Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim())
+            }
+        }
+    }
+
     # 2. Find an available port (starting at 4000) for a separate proxy instance
     $port = 4000
     while ($port -lt 4999) {

@@ -83,7 +83,12 @@ class CustomRateLimitLogger(CustomLogger):
 
             # --- Dynamic Kaggle Credential Injection ---
             api_base = data.get("api_base") or (data.get("litellm_params", {}).get("api_base") if isinstance(data.get("litellm_params"), dict) else "") or ""
-            is_kaggle_target = "kaggle" in model_name.lower() or "kaggle" in str(api_base).lower() or "mp-staging.kaggle.net" in str(api_base)
+            is_kaggle_target = (
+                "kaggle" in model_name.lower() 
+                or "kaggle" in str(api_base).lower() 
+                or "mp-staging.kaggle.net" in str(api_base)
+                or (primary_provider == "kaggle" and not model_name.startswith("nvidia"))
+            )
             
             if is_kaggle_target:
                 if not kaggle_auth_manager.is_token_valid():
