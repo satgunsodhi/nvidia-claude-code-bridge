@@ -57,11 +57,11 @@ def is_vision_model(model_name: str) -> bool:
 class CustomRateLimitLogger(CustomLogger):
     async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type, **kwargs):
         try:
-            # 1. Clamping max_tokens to 4096 to prevent context window explosion
+            # 1. Clamping max_tokens to 8192 to prevent context window explosion
             max_tokens = data.get("max_tokens")
-            if max_tokens is not None and max_tokens > 4096:
-                print(f"\n[CustomLogger] Clamping max_tokens from {max_tokens} to 4096")
-                data["max_tokens"] = 4096
+            if max_tokens is not None and max_tokens > 8192:
+                print(f"\n[CustomLogger] Clamping max_tokens from {max_tokens} to 8192")
+                data["max_tokens"] = 8192
                 sys.stdout.flush()
 
             model_name = data.get("model", "unknown")
@@ -142,7 +142,12 @@ class CustomRateLimitLogger(CustomLogger):
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
         try:
             model = kwargs.get("model", "unknown")
-            actual_model = kwargs.get("litellm_params", {}).get("model", "unknown")
+            actual_model = "unknown"
+            if hasattr(response_obj, "model") and response_obj.model:
+                actual_model = response_obj.model
+            elif kwargs.get("litellm_params", {}).get("model"):
+                actual_model = kwargs.get("litellm_params").get("model")
+                
             print(f"\n[CustomLogger] SUCCESS: Mapped request '{model}' -> Actual downstream model used: '{actual_model}'")
             sys.stdout.flush()
         except Exception as e:
@@ -151,7 +156,12 @@ class CustomRateLimitLogger(CustomLogger):
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
         try:
             model = kwargs.get("model", "unknown")
-            actual_model = kwargs.get("litellm_params", {}).get("model", "unknown")
+            actual_model = "unknown"
+            if hasattr(response_obj, "model") and response_obj.model:
+                actual_model = response_obj.model
+            elif kwargs.get("litellm_params", {}).get("model"):
+                actual_model = kwargs.get("litellm_params").get("model")
+                
             print(f"\n[CustomLogger] SUCCESS: Mapped request '{model}' -> Actual downstream model used: '{actual_model}'")
             sys.stdout.flush()
         except Exception as e:

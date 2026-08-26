@@ -16,6 +16,9 @@ router_settings:
     "claude-3-5-haiku-latest": "nvidia-fast-agent"
     "claude-haiku-4-6": "nvidia-fast-agent"
     "anthropic_haiku": "nvidia-fast-agent"
+    
+    # Catch-all for any unknown/unmapped model request
+    "*": "nvidia-agent"
 
   enable_pre_call_checks: true
   num_retries: 3
@@ -25,7 +28,7 @@ router_settings:
     # Default Agents
     - nvidia-opus-agent: ["nvidia_nim/moonshotai/kimi-k2.6", "z-ai/glm-5.2"]
     - nvidia-agent: ["mistralai/mistral-large-2-instruct", "qwen/qwen3.5-397b-a17b"]
-    - nvidia-fast-agent: ["openai/gpt-oss-120b"]
+    - nvidia-fast-agent: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
 
     # --- Class A (Elite Heavyweight & Reasoning) Fallbacks ---
     - nvidia/nemotron-3-super-120b-a12b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
@@ -102,7 +105,7 @@ router_settings:
   context_window_fallbacks:
     - nvidia-opus-agent: ["z-ai/glm-5.2", "deepseek-ai/deepseek-v4-pro"]
     - nvidia-agent: ["mistralai/mistral-large-2-instruct", "qwen/qwen3.5-397b-a17b"]
-    - nvidia-fast-agent: ["openai/gpt-oss-120b"]
+    - nvidia-fast-agent: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
 
 model_list:
   # --- PRIMARY AGENTS ---
