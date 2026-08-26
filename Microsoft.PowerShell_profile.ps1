@@ -38,15 +38,26 @@ function claude {
         & $pythonExe "$bridgeDir\kaggle_auth.py" --status | Out-Null
     }
 
-    # 2. Start LiteLLM with explicit WorkingDirectory and log redirection
-    $logOutPath = "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge\litellm_out.log"
-    $logErrPath = "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge\litellm_err.log"
-    $proxyProcess = Start-Process -FilePath $litellmExe `
-        -ArgumentList "--config `"$yamlPath`" --detailed_debug" `
-        -WorkingDirectory "C:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge" `
-        -RedirectStandardOutput $logOutPath `
-        -RedirectStandardError $logErrPath `
-        -WindowStyle Hidden -PassThru
+    # 2. Check if LiteLLM proxy is already running on port 4000
+    $logOutPath = "$bridgeDir\litellm_out.log"
+    $logErrPath = "$bridgeDir\litellm_err.log"
+    $portActive = Get-NetTCPConnection -LocalPort 4000 -State Listen -ErrorAction SilentlyContinue
+
+    $proxyProcess = $null
+    if (-not $portActive) {
+        Write-Host "Starting LiteLLM proxy background process on port 4000..." -ForegroundColor Gray
+        $proxyProcess = Start-Process -FilePath $litellmExe `
+            -ArgumentList "--config `"$yamlPath`" --port 4000 --detailed_debug" `
+            -WorkingDirectory $bridgeDir `
+            -RedirectStandardOutput $logOutPath `
+            -RedirectStandardError $logErrPath `
+            -WindowStyle Hidden -PassThru
+
+        # Give the proxy 5 seconds to spin up on Windows
+        Start-Sleep -Seconds 5
+    } else {
+        Write-Host "LiteLLM proxy is already running on port 4000. Reusing active server." -ForegroundColor Gray
+    }
 
     # 3. Set routing environment variables
     $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
@@ -64,15 +75,9 @@ function claude {
     # Disable PowerShell primary tool rollout
     $env:CLAUDE_CODE_USE_POWERSHELL_TOOL = "0" 
 
-    # Force Claude to find and run via Git Bash executable (if not already on path)
-    # $env:CLAUDE_CODE_GIT_BASH_PATH = "C:\Program Files\Git\bin\bash.exe"
-
-    # Give the proxy 5 seconds to spin up on Windows
-    Start-Sleep -Seconds 5
-
     Write-Host "Launching Claude Code via Git Bash using model: $Model" -ForegroundColor Green
 
-    # 4. Execute inside Try/Finally block to ensure proxy cleanup on Ctrl+C
+    # 4. Execute inside Try/Finally block to ensure proxy cleanup if started by this session
     try {
         & claude.exe $RemainingArgs
     }
