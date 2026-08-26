@@ -47,31 +47,29 @@ function claude {
         }
     }
 
-    # 2. Find an available port (starting at 4000) for a separate proxy instance
+    # 2. Check if a LiteLLM proxy is already running on port 4000
     $port = 4000
-    while ($port -lt 4999) {
-        $connection = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
-        if (-not $connection) {
-            break
-        }
-        $port++
+    $connection = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+
+    if (-not $connection) {
+        $logOutPath = "$bridgeDir\litellm_out.log"
+        $logErrPath = "$bridgeDir\litellm_err.log"
+
+        Write-Host "Starting LiteLLM proxy background process on port $port..." -ForegroundColor Gray
+        $proxyProcess = Start-Process -FilePath $litellmExe `
+            -ArgumentList "--config `"$yamlPath`" --port $port --detailed_debug" `
+            -WorkingDirectory $bridgeDir `
+            -RedirectStandardOutput $logOutPath `
+            -RedirectStandardError $logErrPath `
+            -WindowStyle Hidden -PassThru
+
+        # Give the proxy 4 seconds to spin up on Windows
+        Start-Sleep -Seconds 4
+    } else {
+        Write-Host "LiteLLM proxy is already active on port $port. Reusing running server." -ForegroundColor Gray
     }
 
-    $logOutPath = "$bridgeDir\litellm_out_${port}.log"
-    $logErrPath = "$bridgeDir\litellm_err_${port}.log"
-
-    Write-Host "Starting separate LiteLLM proxy background process on port $port..." -ForegroundColor Gray
-    $proxyProcess = Start-Process -FilePath $litellmExe `
-        -ArgumentList "--config `"$yamlPath`" --port $port --detailed_debug" `
-        -WorkingDirectory $bridgeDir `
-        -RedirectStandardOutput $logOutPath `
-        -RedirectStandardError $logErrPath `
-        -WindowStyle Hidden -PassThru
-
-    # Give the proxy 4 seconds to spin up on Windows
-    Start-Sleep -Seconds 4
-
-    # 3. Set routing environment variables pointing to this session's unique proxy port
+    # 3. Set routing environment variables pointing to proxy port
     $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:$port"
     $env:ANTHROPIC_AUTH_TOKEN = "sk-dummy"
     $env:ANTHROPIC_MODEL = $Model
@@ -89,14 +87,6 @@ function claude {
 
     Write-Host "Launching Claude Code via Git Bash using model: $Model (Proxy Port: $port)" -ForegroundColor Green
 
-    # 4. Execute inside Try/Finally block to ensure this session's server is stopped when exiting
-    try {
-        & claude.exe $RemainingArgs
-    }
-    finally {
-        if ($proxyProcess) {
-            Write-Host "Stopping LiteLLM proxy background process (PID: $($proxyProcess.Id), Port: $port)..." -ForegroundColor Gray
-            Stop-Process -Id $proxyProcess.Id -Force -ErrorAction SilentlyContinue
-        }
-    }
+    # 4. Execute claude CLI (server stays running in background)
+    & claude.exe $RemainingArgs
 }
