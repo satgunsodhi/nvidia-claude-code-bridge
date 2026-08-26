@@ -4,5 +4,4 @@
 
 **__pycache__
 
-litellm_err.log
-litellm_out.log
+litellm_*.log
