@@ -38,11 +38,13 @@ function claude {
         & $pythonExe "$bridgeDir\kaggle_auth.py" --status | Out-Null
     }
 
-    # Load Kaggle proxy environment variables into environment before starting LiteLLM
-    if (Test-Path "$bridgeDir\.kaggle_proxy.env") {
-        Get-Content "$bridgeDir\.kaggle_proxy.env" | ForEach-Object {
-            if ($_ -match '^\s*([A-Za-z0-9_]+)\s*=\s*(.*)$') {
-                [System.Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim())
+    # Load environment variables from .env and .kaggle_proxy.env before starting LiteLLM
+    foreach ($ef in @("$bridgeDir\.env", "$bridgeDir\.kaggle_proxy.env")) {
+        if (Test-Path $ef) {
+            Get-Content $ef | ForEach-Object {
+                if ($_ -match '^\s*([A-Za-z0-9_]+)\s*=\s*"?([^"#]+)"?') {
+                    [System.Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim())
+                }
             }
         }
     }

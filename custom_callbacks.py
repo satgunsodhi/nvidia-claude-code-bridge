@@ -3,8 +3,9 @@ import sys
 import json
 import asyncio
 import time
-from collections import deque
+import threading
 import os
+from collections import deque
 from kaggle_auth import kaggle_auth_manager
 
 class AsyncRateLimiter:
@@ -57,7 +58,37 @@ def is_vision_model(model_name: str) -> bool:
     return any(kw in model_lower for kw in vision_keywords)
 
 class CustomRateLimitLogger(CustomLogger):
+    def __init__(self):
+        super().__init__()
+        self.last_request_time = time.time()
+        self._start_inactivity_checker()
+
+    def touch_activity(self):
+        self.last_request_time = time.time()
+
+    def _start_inactivity_checker(self):
+        def _checker():
+            while True:
+                time.sleep(5)
+                try:
+                    timeout_str = os.getenv("PROXY_INACTIVITY_TIMEOUT", "300").strip()
+                    timeout = float(timeout_str) if timeout_str else 300.0
+                    if timeout <= 0:
+                        continue
+                    
+                    idle_seconds = time.time() - self.last_request_time
+                    if idle_seconds >= timeout:
+                        print(f"\n\033[1;33m[AutoShutdown] Inactivity threshold reached ({int(idle_seconds)}s >= {int(timeout)}s). Shutting down LiteLLM proxy server...\033[0m")
+                        sys.stdout.flush()
+                        os._exit(0)
+                except Exception:
+                    pass
+
+        t = threading.Thread(target=_checker, daemon=True)
+        t.start()
+
     async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type, **kwargs):
+        self.touch_activity()
         try:
             # 1. Clamping max_tokens to 8192 to prevent context window explosion
             max_tokens = data.get("max_tokens")
@@ -181,6 +212,7 @@ class CustomRateLimitLogger(CustomLogger):
 
 
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
+        self.touch_activity()
         try:
             model = kwargs.get("model", "unknown")
             actual_model = "unknown"
@@ -195,6 +227,7 @@ class CustomRateLimitLogger(CustomLogger):
             pass
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
+        self.touch_activity()
         try:
             model = kwargs.get("model", "unknown")
             actual_model = "unknown"
@@ -210,12 +243,14 @@ class CustomRateLimitLogger(CustomLogger):
 
 
     def log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        self.touch_activity()
         try:
             self._log_failure(kwargs, response_obj)
         except Exception as e:
             print(f"[CustomLogger] Error in sync callback: {e}", file=sys.stderr)
 
     async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        self.touch_activity()
         try:
             self._log_failure(kwargs, response_obj)
         except Exception as e:
