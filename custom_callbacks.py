@@ -382,9 +382,9 @@ class CustomRateLimitLogger(CustomLogger):
                     print(f"\n\033[1;31m[WARNING] Claude Code attempted to send an image payload to the text-only model '{model_name}'. Images have been stripped to prevent API errors.\033[0m")
                     sys.stdout.flush()
 
-            # 3. Client-Side Rate Limiting (Preventing 429)
-            # Enforce client-side rate limits before sending request to NIM catalog
-            await rate_limiter.acquire(model_name)
+            # 3. Client-Side Rate Limiting (Preventing 429 on NVIDIA NIM catalog models)
+            if not is_kaggle_target:
+                await rate_limiter.acquire(model_name)
 
         except Exception as e:
             print(f"\n[CustomLogger] Error in pre_call_hook: {e}", file=sys.stderr)
