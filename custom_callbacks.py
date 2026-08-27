@@ -284,6 +284,10 @@ class CustomRateLimitLogger(CustomLogger):
         self.touch_activity()
         try:
             model_name = data.get("model", "unknown")
+            if model_name and "[1m]" in model_name:
+                model_name = model_name.replace("[1m]", "")
+                data["model"] = model_name
+
             raw_model = kwargs.get("model") or data.get("model")
             if raw_model:
                 ensure_model_context_window(raw_model)

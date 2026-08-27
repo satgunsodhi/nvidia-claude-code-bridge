@@ -92,8 +92,18 @@ function claude {
 
     # Set auto-compact token limits and context window enforcement for Claude Code CLI based on selected model's native capacity
     $autoCompactLimit = [math]::Floor($maxInputTokens * 0.90)
-    $env:CLAUDE_CODE_MAX_CONTEXT_TOKENS = "$maxInputTokens"
+    
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT", "1", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_MAX_CONTEXT_TOKENS", "$maxInputTokens", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_AUTO_COMPACT_WINDOW", "$maxInputTokens", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_AUTOCOMPACT_PCT_OVERRIDE", "90", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_AUTO_COMPACT_TOKEN_LIMIT", "$autoCompactLimit", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_AUTO_COMPACT_TOKEN_LIMIT", "$autoCompactLimit", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_WORKFLOW_SIZE_WARNING_TOKENS", "$autoCompactLimit", "Process")
+    [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_MAX_OUTPUT_TOKENS", "$maxOutputTokens", "Process")
+
     $env:CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT = "1"
+    $env:CLAUDE_CODE_MAX_CONTEXT_TOKENS = "$maxInputTokens"
     $env:CLAUDE_CODE_AUTO_COMPACT_WINDOW = "$maxInputTokens"
     $env:CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "90"
     $env:CLAUDE_AUTO_COMPACT_TOKEN_LIMIT = "$autoCompactLimit"
@@ -112,12 +122,18 @@ function claude {
     # Disable PowerShell primary tool rollout
     $env:CLAUDE_CODE_USE_POWERSHELL_TOOL = "0" 
 
-    Write-Host "Launching Claude Code via Git Bash using model: $Model (Proxy Port: $port | Context: ${maxInputTokens} tokens | AutoCompact Limit: ${autoCompactLimit} tokens)" -ForegroundColor Green
+    # If model is 1M capacity, append [1m] tag if not present so Claude Code recognizes 1M context
+    $effectiveModel = $Model
+    if ($maxInputTokens -ge 1000000 -and $Model -notlike "*[1m]*") {
+        $effectiveModel = "${Model}[1m]"
+    }
+
+    Write-Host "Launching Claude Code via Git Bash using model: $effectiveModel (Proxy Port: $port | Context: ${maxInputTokens} tokens | AutoCompact Limit: ${autoCompactLimit} tokens)" -ForegroundColor Green
 
     # 4. Execute claude CLI with --model flag
     $cliArgs = @()
-    if ($Model -and ($RemainingArgs -notcontains "--model")) {
-        $cliArgs += @("--model", $Model)
+    if ($effectiveModel -and ($RemainingArgs -notcontains "--model")) {
+        $cliArgs += @("--model", $effectiveModel)
     }
     if ($RemainingArgs) {
         $cliArgs += $RemainingArgs
