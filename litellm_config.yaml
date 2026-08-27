@@ -1,1164 +1,2189 @@
 general_settings:
   alert_types: []
-
 router_settings:
-  # Map native Anthropic model names requested by Claude Code to Kaggle/NVIDIA agents
   model_group_alias:
-    # Opus requests -> Kaggle DeepSeek R1 (with NVIDIA DeepSeek v4 fallback)
-    "claude-3-opus-20240229": "kaggle-opus-agent"
-    "claude-3-opus-latest": "kaggle-opus-agent"
-    "claude-opus-4-6": "kaggle-opus-agent"
-    "anthropic_opus": "kaggle-opus-agent"
-
-    # Sonnet requests -> Kaggle Claude Sonnet 5 (with Gemini 3 & NVIDIA Nemotron 550B fallback)
-    "claude-3-5-sonnet-20241022": "kaggle-agent"
-    "claude-3-5-sonnet-latest": "kaggle-agent"
-    "claude-3-5-sonnet-20240620": "kaggle-agent"
-    "claude-3-sonnet-20240229": "kaggle-agent"
-    "claude-sonnet-4-6": "kaggle-agent"
-    "claude-sonnet-5": "kaggle-agent"
-    "anthropic_sonnet": "kaggle-agent"
-    
-    # Haiku requests -> Kaggle Gemini 3 Flash (with NVIDIA Step 3.7 Flash fallback)
-    "claude-3-5-haiku-20241022": "kaggle-fast-agent"
-    "claude-3-5-haiku-latest": "kaggle-fast-agent"
-    "claude-3-haiku-20240307": "kaggle-fast-agent"
-    "claude-haiku-4-6": "kaggle-fast-agent"
-    "anthropic_haiku": "kaggle-fast-agent"
-    
-    # Catch-all for any unknown/unmapped model request
-    "*": "kaggle-agent"
-
+    claude-3-opus-20240229: kaggle-opus-agent
+    claude-3-opus-latest: kaggle-opus-agent
+    claude-opus-4-6: kaggle-opus-agent
+    anthropic_opus: kaggle-opus-agent
+    claude-3-5-sonnet-20241022: kaggle-agent
+    claude-3-5-sonnet-latest: kaggle-agent
+    claude-3-5-sonnet-20240620: kaggle-agent
+    claude-3-sonnet-20240229: kaggle-agent
+    claude-sonnet-4-6: kaggle-agent
+    claude-sonnet-5: kaggle-agent
+    anthropic_sonnet: kaggle-agent
+    claude-3-5-haiku-20241022: kaggle-fast-agent
+    claude-3-5-haiku-latest: kaggle-fast-agent
+    claude-3-haiku-20240307: kaggle-fast-agent
+    claude-haiku-4-6: kaggle-fast-agent
+    anthropic_haiku: kaggle-fast-agent
+    '*': kaggle-agent
   enable_pre_call_checks: true
   num_retries: 3
-  
-  # Common Class-Based Fallbacks for all models
   fallbacks:
-    # Kaggle Primary Agents with Multi-Tier Fallbacks (Kaggle -> NVIDIA NIM)
-    - kaggle-opus-agent: ["openai/openai/gpt-5.4-nano-2026-03-17", "nvidia-opus-agent", "nvidia_nim/moonshotai/kimi-k2.6"]
-    - kaggle-agent: ["openai/google/gemini-3-flash-preview", "nvidia-agent", "mistralai/mistral-large-2-instruct"]
-    - kaggle-fast-agent: ["openai/google/gemini-3.1-flash-lite-preview", "nvidia-fast-agent", "meta/llama-3.1-8b-instruct"]
-
-    # Default NVIDIA Agents
-    - nvidia-opus-agent: ["nvidia_nim/moonshotai/kimi-k2.6", "z-ai/glm-5.2"]
-    - nvidia-agent: ["mistralai/mistral-large-2-instruct", "qwen/qwen3.5-397b-a17b"]
-    - nvidia-fast-agent: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-
-    # --- Class A (Elite Heavyweight & Reasoning) Fallbacks ---
-    - nvidia/nemotron-3-super-120b-a12b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - nvidia/nemotron-3-ultra-550b-a55b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - nvidia/llama-3.3-nemotron-super-49b-v1: ["nvidia/nemotron-3-super-120b-a12b", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - nvidia/llama-3.3-nemotron-super-49b-v1.5: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - nvidia/llama-3.1-nemotron-ultra-253b-v1: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - mistralai/mistral-large-2-instruct: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "nvidia/nemotron-3-super-120b-a12b"]
-    - mistralai/mistral-medium-3.5-128b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - mistralai/mistral-small-4-119b-2603: ["meta/llama-3.3-70b-instruct", "nvidia/llama-3.3-nemotron-super-49b-v1", "mistralai/mistral-large-2-instruct"]
-    - deepseek-ai/deepseek-v4-pro: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - qwen/qwen3.5-397b-a17b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - qwen/qwen3-next-80b-a3b-instruct: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - openai/gpt-oss-120b: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - meta/llama-3.3-70b-instruct: ["nvidia/llama-3.3-nemotron-super-49b-v1", "nvidia/nemotron-3-super-120b-a12b", "mistralai/mistral-large-2-instruct"]
-    - meta/llama-3.1-70b-instruct: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - abacusai/dracarys-llama-3.1-70b-instruct: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-    - z-ai/glm-5.2: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.3-70b-instruct", "mistralai/mistral-large-2-instruct"]
-
-    # --- Class B (Multimodal & Vision) Fallbacks ---
-    - nvidia/nemotron-nano-12b-v2-vl: ["meta/llama-3.2-11b-vision-instruct", "meta/llama-3.2-90b-vision-instruct", "microsoft/phi-3-vision-128k-instruct"]
-    - nvidia/llama-3.1-nemotron-nano-vl-8b-v1: ["meta/llama-3.2-11b-vision-instruct", "meta/llama-3.2-90b-vision-instruct", "microsoft/phi-3-vision-128k-instruct"]
-    - meta/llama-3.2-11b-vision-instruct: ["meta/llama-3.2-90b-vision-instruct", "microsoft/phi-3-vision-128k-instruct", "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"]
-    - meta/llama-3.2-90b-vision-instruct: ["meta/llama-3.2-11b-vision-instruct", "microsoft/phi-3-vision-128k-instruct", "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"]
-    - microsoft/phi-3-vision-128k-instruct: ["meta/llama-3.2-90b-vision-instruct", "meta/llama-3.2-11b-vision-instruct", "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"]
-    - google/gemma-3-12b-it: ["meta/llama-3.2-11b-vision-instruct", "meta/llama-3.2-90b-vision-instruct"]
-
-    # --- Class C (Fast & Efficient) Fallbacks ---
-    - minimaxai/minimax-m3: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct", "google/gemma-3-12b-it"]
-    - minimaxai/minimax-m2.7: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct", "google/gemma-3-12b-it"]
-    - google/gemma-4-31b-it: ["meta/llama-3.1-8b-instruct", "google/gemma-3n-e4b-it", "google/gemma-3-12b-it"]
-    - google/gemma-3n-e4b-it: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct", "google/gemma-3-12b-it"]
-    - google/gemma-3n-e2b-it: ["google/gemma-2-2b-it", "meta/llama-3.2-3b-instruct"]
-    - google/gemma-2-2b-it: ["meta/llama-3.2-3b-instruct", "meta/llama-3.2-1b-instruct"]
-    - nvidia/cosmos-reason2-8b: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - nvidia/nemotron-3-nano-omni-30b-a3b-reasoning: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - nvidia/nvidia-nemotron-nano-9b-v2: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-    - nvidia/nemotron-3-nano-30b-a3b: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-    - nvidia/nemotron-nano-3-30b-a3b: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-    - nvidia/nemotron-mini-4b-instruct: ["meta/llama-3.2-3b-instruct", "google/gemma-2-2b-it"]
-    - nvidia/llama-3.1-nemotron-nano-8b-v1: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-    - stepfun-ai/step-3.7-flash: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - stepfun-ai/step-3.5-flash: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - moonshotai/kimi-k2.6: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - mistralai/ministral-14b-instruct-2512: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - mistralai/mistral-nemotron: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - mistralai/mixtral-8x7b-instruct-v0.1: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-    - deepseek-ai/deepseek-v4-flash: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - openai/gpt-oss-20b: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-    - bytedance/seed-oss-36b-instruct: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-    - meta/llama-3.2-3b-instruct: ["meta/llama-3.2-1b-instruct", "google/gemma-2-2b-it"]
-    - meta/llama-3.2-1b-instruct: ["meta/llama-3.2-3b-instruct", "google/gemma-2-2b-it"]
-    - meta/llama-4-maverick-17b-128e-instruct: ["meta/llama-3.3-70b-instruct", "google/gemma-4-31b-it"]
-    - meta/llama-3.1-8b-instruct: ["google/gemma-4-31b-it", "meta/llama-3.2-3b-instruct"]
-    - upstage/solar-10.7b-instruct: ["google/gemma-4-31b-it", "meta/llama-3.1-8b-instruct"]
-
-    # --- Class D (Specialized / Safety / Translation / Utility) Fallbacks ---
-    - google/diffusiongemma-26b-a4b-it: ["nvidia/llama-3.3-nemotron-super-49b-v1", "meta/llama-3.1-8b-instruct"]
-    - nvidia/nemotron-3.5-content-safety: ["nvidia/llama-3.1-nemoguard-8b-content-safety", "nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/llama-3.1-nemoguard-8b-content-safety: ["nvidia/nemotron-3.5-content-safety", "nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/ai-synthetic-video-detector: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/ising-calibration-1-35b-a3b: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/ising-calibration-1.5-31b: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/gliner-pii: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/riva-translate-4b-instruct-v1.1: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/riva-translate-4b-instruct: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/llama-3.1-nemotron-safety-guard-8b-v3: ["nvidia/nemotron-3.5-content-safety", "nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/nv-embedcode-7b-v1: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - nvidia/nv-embed-v1: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - meta/llama-guard-4-12b: ["nvidia/nemotron-3.5-content-safety", "nvidia/llama-3.3-nemotron-super-49b-v1"]
-    - sarvamai/sarvam-m: ["nvidia/llama-3.3-nemotron-super-49b-v1"]
-
-  # Fallbacks for context window limit exceeded (fallback to high capacity models)
+  - kaggle-opus-agent:
+    - openai/openai/gpt-5.4-nano-2026-03-17
+    - nvidia-opus-agent
+    - nvidia_nim/moonshotai/kimi-k2.6
+  - kaggle-agent:
+    - openai/google/gemini-3-flash-preview
+    - nvidia-agent
+    - mistralai/mistral-large-2-instruct
+  - kaggle-fast-agent:
+    - openai/google/gemini-3.1-flash-lite-preview
+    - nvidia-fast-agent
+    - meta/llama-3.1-8b-instruct
+  - nvidia-opus-agent:
+    - nvidia_nim/moonshotai/kimi-k2.6
+    - z-ai/glm-5.2
+  - nvidia-agent:
+    - mistralai/mistral-large-2-instruct
+    - qwen/qwen3.5-397b-a17b
+  - nvidia-fast-agent:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - nvidia/nemotron-3-super-120b-a12b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - nvidia/nemotron-3-ultra-550b-a55b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - nvidia/llama-3.3-nemotron-super-49b-v1:
+    - nvidia/nemotron-3-super-120b-a12b
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - nvidia/llama-3.3-nemotron-super-49b-v1.5:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - nvidia/llama-3.1-nemotron-ultra-253b-v1:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - mistralai/mistral-large-2-instruct:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - nvidia/nemotron-3-super-120b-a12b
+  - mistralai/mistral-medium-3.5-128b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - mistralai/mistral-small-4-119b-2603:
+    - meta/llama-3.3-70b-instruct
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - mistralai/mistral-large-2-instruct
+  - deepseek-ai/deepseek-v4-pro:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - qwen/qwen3.5-397b-a17b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - qwen/qwen3-next-80b-a3b-instruct:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - openai/gpt-oss-120b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - meta/llama-3.3-70b-instruct:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - nvidia/nemotron-3-super-120b-a12b
+    - mistralai/mistral-large-2-instruct
+  - meta/llama-3.1-70b-instruct:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - abacusai/dracarys-llama-3.1-70b-instruct:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - z-ai/glm-5.2:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.3-70b-instruct
+    - mistralai/mistral-large-2-instruct
+  - nvidia/nemotron-nano-12b-v2-vl:
+    - meta/llama-3.2-11b-vision-instruct
+    - meta/llama-3.2-90b-vision-instruct
+    - microsoft/phi-3-vision-128k-instruct
+  - nvidia/llama-3.1-nemotron-nano-vl-8b-v1:
+    - meta/llama-3.2-11b-vision-instruct
+    - meta/llama-3.2-90b-vision-instruct
+    - microsoft/phi-3-vision-128k-instruct
+  - meta/llama-3.2-11b-vision-instruct:
+    - meta/llama-3.2-90b-vision-instruct
+    - microsoft/phi-3-vision-128k-instruct
+    - nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+  - meta/llama-3.2-90b-vision-instruct:
+    - meta/llama-3.2-11b-vision-instruct
+    - microsoft/phi-3-vision-128k-instruct
+    - nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+  - microsoft/phi-3-vision-128k-instruct:
+    - meta/llama-3.2-90b-vision-instruct
+    - meta/llama-3.2-11b-vision-instruct
+    - nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+  - google/gemma-3-12b-it:
+    - meta/llama-3.2-11b-vision-instruct
+    - meta/llama-3.2-90b-vision-instruct
+  - minimaxai/minimax-m3:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-3-12b-it
+  - minimaxai/minimax-m2.7:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-3-12b-it
+  - google/gemma-4-31b-it:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-3n-e4b-it
+    - google/gemma-3-12b-it
+  - google/gemma-3n-e4b-it:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-3-12b-it
+  - google/gemma-3n-e2b-it:
+    - google/gemma-2-2b-it
+    - meta/llama-3.2-3b-instruct
+  - google/gemma-2-2b-it:
+    - meta/llama-3.2-3b-instruct
+    - meta/llama-3.2-1b-instruct
+  - nvidia/cosmos-reason2-8b:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - nvidia/nvidia-nemotron-nano-9b-v2:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - nvidia/nemotron-3-nano-30b-a3b:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - nvidia/nemotron-nano-3-30b-a3b:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - nvidia/nemotron-mini-4b-instruct:
+    - meta/llama-3.2-3b-instruct
+    - google/gemma-2-2b-it
+  - nvidia/llama-3.1-nemotron-nano-8b-v1:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - stepfun-ai/step-3.7-flash:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - stepfun-ai/step-3.5-flash:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - moonshotai/kimi-k2.6:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - mistralai/ministral-14b-instruct-2512:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - mistralai/mistral-nemotron:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - mistralai/mixtral-8x7b-instruct-v0.1:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - deepseek-ai/deepseek-v4-flash:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - openai/gpt-oss-20b:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
+  - bytedance/seed-oss-36b-instruct:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - meta/llama-3.2-3b-instruct:
+    - meta/llama-3.2-1b-instruct
+    - google/gemma-2-2b-it
+  - meta/llama-3.2-1b-instruct:
+    - meta/llama-3.2-3b-instruct
+    - google/gemma-2-2b-it
+  - meta/llama-4-maverick-17b-128e-instruct:
+    - meta/llama-3.3-70b-instruct
+    - google/gemma-4-31b-it
+  - meta/llama-3.1-8b-instruct:
+    - google/gemma-4-31b-it
+    - meta/llama-3.2-3b-instruct
+  - upstage/solar-10.7b-instruct:
+    - google/gemma-4-31b-it
+    - meta/llama-3.1-8b-instruct
+  - google/diffusiongemma-26b-a4b-it:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+    - meta/llama-3.1-8b-instruct
+  - nvidia/nemotron-3.5-content-safety:
+    - nvidia/llama-3.1-nemoguard-8b-content-safety
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/llama-3.1-nemoguard-8b-content-safety:
+    - nvidia/nemotron-3.5-content-safety
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/ai-synthetic-video-detector:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/ising-calibration-1-35b-a3b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/ising-calibration-1.5-31b:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/gliner-pii:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/riva-translate-4b-instruct-v1.1:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/riva-translate-4b-instruct:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/llama-3.1-nemotron-safety-guard-8b-v3:
+    - nvidia/nemotron-3.5-content-safety
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/nv-embedcode-7b-v1:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/nv-embed-v1:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - meta/llama-guard-4-12b:
+    - nvidia/nemotron-3.5-content-safety
+    - nvidia/llama-3.3-nemotron-super-49b-v1
+  - sarvamai/sarvam-m:
+    - nvidia/llama-3.3-nemotron-super-49b-v1
   context_window_fallbacks:
-    - nvidia-opus-agent: ["z-ai/glm-5.2", "deepseek-ai/deepseek-v4-pro"]
-    - nvidia-agent: ["mistralai/mistral-large-2-instruct", "qwen/qwen3.5-397b-a17b"]
-    - nvidia-fast-agent: ["meta/llama-3.1-8b-instruct", "google/gemma-4-31b-it"]
-
+  - nvidia-opus-agent:
+    - z-ai/glm-5.2
+    - deepseek-ai/deepseek-v4-pro
+  - nvidia-agent:
+    - mistralai/mistral-large-2-instruct
+    - qwen/qwen3.5-397b-a17b
+  - nvidia-fast-agent:
+    - meta/llama-3.1-8b-instruct
+    - google/gemma-4-31b-it
 model_list:
-  # ==========================================
-  # KAGGLE MODEL PROXY PRIMARY AGENTS
-  # ==========================================
-  - model_name: "kaggle-opus-agent"
-    litellm_params:
-      model: "openai/deepseek-ai/deepseek-r1-0528"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-    model_info:
-      max_input_tokens: 128000
-
-  - model_name: "kaggle-agent"
-    litellm_params:
-      model: "openai/anthropic/claude-sonnet-5@default"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-    model_info:
-      max_input_tokens: 200000
-
-  - model_name: "kaggle-fast-agent"
-    litellm_params:
-      model: "openai/google/gemini-3-flash-preview"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-    model_info:
-      max_input_tokens: 1000000
-
-  # ==========================================
-  # KAGGLE MODEL PROXY CATALOG
-  # ==========================================
-  - model_name: "anthropic/claude-sonnet-5@default"
-    litellm_params:
-      model: "openai/anthropic/claude-sonnet-5@default"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "google/gemini-3-flash-preview"
-    litellm_params:
-      model: "openai/google/gemini-3-flash-preview"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "google/gemini-3.1-flash-lite-preview"
-    litellm_params:
-      model: "openai/google/gemini-3.1-flash-lite-preview"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "openai/gpt-5.4-nano-2026-03-17"
-    litellm_params:
-      model: "openai/openai/gpt-5.4-nano-2026-03-17"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "openai/gpt-oss-120b"
-    litellm_params:
-      model: "openai/openai/gpt-oss-120b"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "deepseek-ai/deepseek-r1-0528"
-    litellm_params:
-      model: "openai/deepseek-ai/deepseek-r1-0528"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "qwen/qwen3-next-80b-a3b-instruct"
-    litellm_params:
-      model: "openai/qwen/qwen3-next-80b-a3b-instruct"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  - model_name: "ibm/granite-4.0-h-small"
-    litellm_params:
-      model: "openai/ibm/granite-4.0-h-small"
-      api_base: "https://mp-staging.kaggle.net/models/openapi"
-      api_key: "os.environ/KAGGLE_MODEL_PROXY_KEY"
-      drop_params: true
-
-  # ==========================================
-  # NVIDIA NIM PRIMARY AGENTS
-  # ==========================================
-  - model_name: "nvidia-opus-agent"
-    litellm_params:
-      model: "nvidia_nim/deepseek-ai/deepseek-v4-pro"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-    model_info:
-      max_input_tokens: 256000
-
-  - model_name: "nvidia-agent"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-    model_info:
-      max_input_tokens: 32768
-      
-  - model_name: "nvidia-fast-agent"
-    litellm_params:
-      model: "nvidia_nim/stepfun-ai/step-3.7-flash"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-    model_info:
-      max_input_tokens: 40960
-
-  # ==========================================
-  # 01-ai
-  # ==========================================
-  - model_name: "01-ai/yi-large"
-    litellm_params:
-      model: "nvidia_nim/01-ai/yi-large"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # abacusai
-  # ==========================================
-  - model_name: "abacusai/dracarys-llama-3.1-70b-instruct"
-    litellm_params:
-      model: "nvidia_nim/abacusai/dracarys-llama-3.1-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # adept
-  # ==========================================
-  - model_name: "adept/fuyu-8b"
-    litellm_params:
-      model: "nvidia_nim/adept/fuyu-8b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # ai21labs
-  # ==========================================
-  - model_name: "ai21labs/jamba-1.5-large-instruct"
-    litellm_params:
-      model: "nvidia_nim/ai21labs/jamba-1.5-large-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # aisingapore
-  # ==========================================
-  - model_name: "aisingapore/sea-lion-7b-instruct"
-    litellm_params:
-      model: "nvidia_nim/aisingapore/sea-lion-7b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # baai
-  # ==========================================
-  - model_name: "baai/bge-m3"
-    litellm_params:
-      model: "nvidia_nim/baai/bge-m3"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # bigcode
-  # ==========================================
-  - model_name: "bigcode/starcoder2-15b"
-    litellm_params:
-      model: "nvidia_nim/bigcode/starcoder2-15b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # bytedance
-  # ==========================================
-  - model_name: "bytedance/seed-oss-36b-instruct"
-    litellm_params:
-      model: "nvidia_nim/bytedance/seed-oss-36b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # databricks
-  # ==========================================
-  - model_name: "databricks/dbrx-instruct"
-    litellm_params:
-      model: "nvidia_nim/databricks/dbrx-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # deepseek-ai
-  # ==========================================
-  - model_name: "deepseek-ai/deepseek-coder-6.7b-instruct"
-    litellm_params:
-      model: "nvidia_nim/deepseek-ai/deepseek-coder-6.7b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "deepseek-ai/deepseek-v4-flash"
-    litellm_params:
-      model: "nvidia_nim/deepseek-ai/deepseek-v4-flash"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "deepseek-ai/deepseek-v4-pro"
-    litellm_params:
-      model: "nvidia_nim/deepseek-ai/deepseek-v4-pro"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # google
-  # ==========================================
-  - model_name: "google/codegemma-1.1-7b"
-    litellm_params:
-      model: "nvidia_nim/google/codegemma-1.1-7b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/codegemma-7b"
-    litellm_params:
-      model: "nvidia_nim/google/codegemma-7b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/deplot"
-    litellm_params:
-      model: "nvidia_nim/google/deplot"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/diffusiongemma-26b-a4b-it"
-    litellm_params:
-      model: "nvidia_nim/google/diffusiongemma-26b-a4b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-2-2b-it"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-2-2b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-2b"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-2b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-3-12b-it"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-3-12b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-3-4b-it"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-3-4b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-3n-e2b-it"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-3n-e2b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-3n-e4b-it"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-3n-e4b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/gemma-4-31b-it"
-    litellm_params:
-      model: "nvidia_nim/google/gemma-4-31b-it"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "google/recurrentgemma-2b"
-    litellm_params:
-      model: "nvidia_nim/google/recurrentgemma-2b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # ibm
-  # ==========================================
-  - model_name: "ibm/granite-3.0-3b-a800m-instruct"
-    litellm_params:
-      model: "nvidia_nim/ibm/granite-3.0-3b-a800m-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "ibm/granite-3.0-8b-instruct"
-    litellm_params:
-      model: "nvidia_nim/ibm/granite-3.0-8b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "ibm/granite-34b-code-instruct"
-    litellm_params:
-      model: "nvidia_nim/ibm/granite-34b-code-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "ibm/granite-8b-code-instruct"
-    litellm_params:
-      model: "nvidia_nim/ibm/granite-8b-code-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # meta
-  # ==========================================
-  - model_name: "meta/codellama-70b"
-    litellm_params:
-      model: "nvidia_nim/meta/codellama-70b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.1-70b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.1-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.1-8b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.1-8b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.2-11b-vision-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.2-11b-vision-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.2-1b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.2-1b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.2-3b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.2-3b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.2-90b-vision-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.2-90b-vision-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-3.3-70b-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-3.3-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-4-maverick-17b-128e-instruct"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-4-maverick-17b-128e-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama-guard-4-12b"
-    litellm_params:
-      model: "nvidia_nim/meta/llama-guard-4-12b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "meta/llama2-70b"
-    litellm_params:
-      model: "nvidia_nim/meta/llama2-70b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # microsoft
-  # ==========================================
-  - model_name: "microsoft/kosmos-2"
-    litellm_params:
-      model: "nvidia_nim/microsoft/kosmos-2"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "microsoft/phi-3-vision-128k-instruct"
-    litellm_params:
-      model: "nvidia_nim/microsoft/phi-3-vision-128k-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "microsoft/phi-3.5-moe-instruct"
-    litellm_params:
-      model: "nvidia_nim/microsoft/phi-3.5-moe-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # minimaxai
-  # ==========================================
-  - model_name: "minimaxai/minimax-m2.7"
-    litellm_params:
-      model: "nvidia_nim/minimaxai/minimax-m2.7"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "minimaxai/minimax-m3"
-    litellm_params:
-      model: "nvidia_nim/minimaxai/minimax-m3"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # mistralai
-  # ==========================================
-  - model_name: "mistralai/codestral-22b-instruct-v0.1"
-    litellm_params:
-      model: "nvidia_nim/mistralai/codestral-22b-instruct-v0.1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/ministral-14b-instruct-2512"
-    litellm_params:
-      model: "nvidia_nim/mistralai/ministral-14b-instruct-2512"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mistral-7b-instruct-v0.3"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mistral-7b-instruct-v0.3"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mistral-large"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mistral-large"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mistral-large-2-instruct"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mistral-large-2-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mistral-medium-3.5-128b"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mistral-medium-3.5-128b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mistral-nemotron"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mistral-nemotron"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mistral-small-4-119b-2603"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mistral-small-4-119b-2603"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mixtral-8x22b-v0.1"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mixtral-8x22b-v0.1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "mistralai/mixtral-8x7b-instruct-v0.1"
-    litellm_params:
-      model: "nvidia_nim/mistralai/mixtral-8x7b-instruct-v0.1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # moonshotai
-  # ==========================================
-  - model_name: "moonshotai/kimi-k2.6"
-    litellm_params:
-      model: "nvidia_nim/moonshotai/kimi-k2.6"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # nv-mistralai
-  # ==========================================
-  - model_name: "nv-mistralai/mistral-nemo-12b-instruct"
-    litellm_params:
-      model: "nvidia_nim/nv-mistralai/mistral-nemo-12b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # nvidia
-  # ==========================================
-  - model_name: "nvidia/ai-synthetic-video-detector"
-    litellm_params:
-      model: "nvidia_nim/nvidia/ai-synthetic-video-detector"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/cosmos-reason2-8b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/cosmos-reason2-8b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/embed-qa-4"
-    litellm_params:
-      model: "nvidia_nim/nvidia/embed-qa-4"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/gliner-pii"
-    litellm_params:
-      model: "nvidia_nim/nvidia/gliner-pii"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/ising-calibration-1-35b-a3b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/ising-calibration-1-35b-a3b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/ising-calibration-1.5-31b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/ising-calibration-1.5-31b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemoguard-8b-content-safety"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemoguard-8b-content-safety"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemoguard-8b-topic-control"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemoguard-8b-topic-control"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemotron-51b-instruct"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemotron-51b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemotron-70b-instruct"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemotron-nano-8b-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemotron-nano-8b-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemotron-safety-guard-8b-v3"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemotron-safety-guard-8b-v3"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.1-nemotron-ultra-253b-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.1-nemotron-ultra-253b-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.2-nv-embedqa-1b-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.2-nv-embedqa-1b-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.3-nemotron-super-49b-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-3.3-nemotron-super-49b-v1.5"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-3.3-nemotron-super-49b-v1.5"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-nemotron-embed-1b-v2"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-nemotron-embed-1b-v2"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama-nemotron-embed-vl-1b-v2"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama-nemotron-embed-vl-1b-v2"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/llama3-chatqa-1.5-70b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/llama3-chatqa-1.5-70b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/mistral-nemo-minitron-8b-8k-instruct"
-    litellm_params:
-      model: "nvidia_nim/nvidia/mistral-nemo-minitron-8b-8k-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemoretriever-parse"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemoretriever-parse"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-3-embed-1b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3-embed-1b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-3-nano-30b-a3b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3-nano-30b-a3b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-3-super-120b-a12b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3-super-120b-a12b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-3-ultra-550b-a55b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-3.5-content-safety"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-3.5-content-safety"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-4-340b-instruct"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-4-340b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-4-340b-reward"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-4-340b-reward"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-mini-4b-instruct"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-mini-4b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-nano-12b-v2-vl"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-nano-12b-v2-vl"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-nano-3-30b-a3b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-nano-3-30b-a3b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nemotron-parse"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nemotron-parse"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/neva-22b"
-    litellm_params:
-      model: "nvidia_nim/nvidia/neva-22b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nv-embed-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nv-embed-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nv-embedcode-7b-v1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nv-embedcode-7b-v1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nv-embedqa-e5-v5"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nv-embedqa-e5-v5"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nv-embedqa-mistral-7b-v2"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nv-embedqa-mistral-7b-v2"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nvclip"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nvclip"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/nvidia-nemotron-nano-9b-v2"
-    litellm_params:
-      model: "nvidia_nim/nvidia/nvidia-nemotron-nano-9b-v2"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/riva-translate-4b-instruct"
-    litellm_params:
-      model: "nvidia_nim/nvidia/riva-translate-4b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/riva-translate-4b-instruct-v1.1"
-    litellm_params:
-      model: "nvidia_nim/nvidia/riva-translate-4b-instruct-v1.1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "nvidia/vila"
-    litellm_params:
-      model: "nvidia_nim/nvidia/vila"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # openai
-  # ==========================================
-  - model_name: "openai/gpt-oss-120b"
-    litellm_params:
-      model: "nvidia_nim/openai/gpt-oss-120b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "openai/gpt-oss-20b"
-    litellm_params:
-      model: "nvidia_nim/openai/gpt-oss-20b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # poolside
-  # ==========================================
-  - model_name: "poolside/laguna-xs-2.1"
-    litellm_params:
-      model: "nvidia_nim/poolside/laguna-xs-2.1"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # qwen
-  # ==========================================
-  - model_name: "qwen/qwen3-next-80b-a3b-instruct"
-    litellm_params:
-      model: "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "qwen/qwen3.5-397b-a17b"
-    litellm_params:
-      model: "nvidia_nim/qwen/qwen3.5-397b-a17b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # sarvamai
-  # ==========================================
-  - model_name: "sarvamai/sarvam-m"
-    litellm_params:
-      model: "nvidia_nim/sarvamai/sarvam-m"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # snowflake
-  # ==========================================
-  - model_name: "snowflake/arctic-embed-l"
-    litellm_params:
-      model: "nvidia_nim/snowflake/arctic-embed-l"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # stepfun-ai
-  # ==========================================
-  - model_name: "stepfun-ai/step-3.5-flash"
-    litellm_params:
-      model: "nvidia_nim/stepfun-ai/step-3.5-flash"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "stepfun-ai/step-3.7-flash"
-    litellm_params:
-      model: "nvidia_nim/stepfun-ai/step-3.7-flash"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # thinkingmachines
-  # ==========================================
-  - model_name: "thinkingmachines/inkling"
-    litellm_params:
-      model: "nvidia_nim/thinkingmachines/inkling"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # upstage
-  # ==========================================
-  - model_name: "upstage/solar-10.7b-instruct"
-    litellm_params:
-      model: "nvidia_nim/upstage/solar-10.7b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # writer
-  # ==========================================
-  - model_name: "writer/palmyra-creative-122b"
-    litellm_params:
-      model: "nvidia_nim/writer/palmyra-creative-122b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "writer/palmyra-fin-70b-32k"
-    litellm_params:
-      model: "nvidia_nim/writer/palmyra-fin-70b-32k"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "writer/palmyra-med-70b"
-    litellm_params:
-      model: "nvidia_nim/writer/palmyra-med-70b"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  - model_name: "writer/palmyra-med-70b-32k"
-    litellm_params:
-      model: "nvidia_nim/writer/palmyra-med-70b-32k"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # z-ai
-  # ==========================================
-  - model_name: "z-ai/glm-5.2"
-    litellm_params:
-      model: "nvidia_nim/z-ai/glm-5.2"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
-  # ==========================================
-  # zyphra
-  # ==========================================
-  - model_name: "zyphra/zamba2-7b-instruct"
-    litellm_params:
-      model: "nvidia_nim/zyphra/zamba2-7b-instruct"
-      api_key: "os.environ/NVIDIA_API_KEY"
-      rpm: 40
-      drop_params: true
-
+- model_name: kaggle-opus-agent
+  litellm_params:
+    model: openai/deepseek-ai/deepseek-r1-0528
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: kaggle-agent
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: kaggle-fast-agent
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: anthropic/claude-sonnet-5@default
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemini-3-flash-preview
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemini-3.1-flash-lite-preview
+  litellm_params:
+    model: openai/google/gemini-3.1-flash-lite-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: openai/gpt-5.4-nano-2026-03-17
+  litellm_params:
+    model: openai/openai/gpt-5.4-nano-2026-03-17
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: openai/gpt-oss-120b
+  litellm_params:
+    model: openai/openai/gpt-oss-120b
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: deepseek-ai/deepseek-r1-0528
+  litellm_params:
+    model: openai/deepseek-ai/deepseek-r1-0528
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: qwen/qwen3-next-80b-a3b-instruct
+  litellm_params:
+    model: openai/qwen/qwen3-next-80b-a3b-instruct
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: ibm/granite-4.0-h-small
+  litellm_params:
+    model: openai/ibm/granite-4.0-h-small
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia-opus-agent
+  litellm_params:
+    model: nvidia_nim/deepseek-ai/deepseek-v4-pro
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 256000
+    max_output_tokens: 16384
+    max_tokens: 16384
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia-agent
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia-fast-agent
+  litellm_params:
+    model: nvidia_nim/stepfun-ai/step-3.7-flash
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 256000
+    max_output_tokens: 16384
+    max_tokens: 16384
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: 01-ai/yi-large
+  litellm_params:
+    model: nvidia_nim/01-ai/yi-large
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: abacusai/dracarys-llama-3.1-70b-instruct
+  litellm_params:
+    model: nvidia_nim/abacusai/dracarys-llama-3.1-70b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: adept/fuyu-8b
+  litellm_params:
+    model: nvidia_nim/adept/fuyu-8b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: ai21labs/jamba-1.5-large-instruct
+  litellm_params:
+    model: nvidia_nim/ai21labs/jamba-1.5-large-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: aisingapore/sea-lion-7b-instruct
+  litellm_params:
+    model: nvidia_nim/aisingapore/sea-lion-7b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: baai/bge-m3
+  litellm_params:
+    model: nvidia_nim/baai/bge-m3
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: bigcode/starcoder2-15b
+  litellm_params:
+    model: nvidia_nim/bigcode/starcoder2-15b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: bytedance/seed-oss-36b-instruct
+  litellm_params:
+    model: nvidia_nim/bytedance/seed-oss-36b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: databricks/dbrx-instruct
+  litellm_params:
+    model: nvidia_nim/databricks/dbrx-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: deepseek-ai/deepseek-coder-6.7b-instruct
+  litellm_params:
+    model: nvidia_nim/deepseek-ai/deepseek-coder-6.7b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: deepseek-ai/deepseek-v4-flash
+  litellm_params:
+    model: nvidia_nim/deepseek-ai/deepseek-v4-flash
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 16384
+    max_tokens: 16384
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: deepseek-ai/deepseek-v4-pro
+  litellm_params:
+    model: nvidia_nim/deepseek-ai/deepseek-v4-pro
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 256000
+    max_output_tokens: 16384
+    max_tokens: 16384
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/codegemma-1.1-7b
+  litellm_params:
+    model: nvidia_nim/google/codegemma-1.1-7b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/codegemma-7b
+  litellm_params:
+    model: nvidia_nim/google/codegemma-7b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/deplot
+  litellm_params:
+    model: nvidia_nim/google/deplot
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/diffusiongemma-26b-a4b-it
+  litellm_params:
+    model: nvidia_nim/google/diffusiongemma-26b-a4b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 32768
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-2-2b-it
+  litellm_params:
+    model: nvidia_nim/google/gemma-2-2b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 8192
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-2b
+  litellm_params:
+    model: nvidia_nim/google/gemma-2b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-3-12b-it
+  litellm_params:
+    model: nvidia_nim/google/gemma-3-12b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-3-4b-it
+  litellm_params:
+    model: nvidia_nim/google/gemma-3-4b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-3n-e2b-it
+  litellm_params:
+    model: nvidia_nim/google/gemma-3n-e2b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-3n-e4b-it
+  litellm_params:
+    model: nvidia_nim/google/gemma-3n-e4b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/gemma-4-31b-it
+  litellm_params:
+    model: nvidia_nim/google/gemma-4-31b-it
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: google/recurrentgemma-2b
+  litellm_params:
+    model: nvidia_nim/google/recurrentgemma-2b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: ibm/granite-3.0-3b-a800m-instruct
+  litellm_params:
+    model: nvidia_nim/ibm/granite-3.0-3b-a800m-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: ibm/granite-3.0-8b-instruct
+  litellm_params:
+    model: nvidia_nim/ibm/granite-3.0-8b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: ibm/granite-34b-code-instruct
+  litellm_params:
+    model: nvidia_nim/ibm/granite-34b-code-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: ibm/granite-8b-code-instruct
+  litellm_params:
+    model: nvidia_nim/ibm/granite-8b-code-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/codellama-70b
+  litellm_params:
+    model: nvidia_nim/meta/codellama-70b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.1-70b-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.1-70b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.1-8b-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.1-8b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.2-11b-vision-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.2-11b-vision-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.2-1b-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.2-1b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.2-3b-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.2-3b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.2-90b-vision-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.2-90b-vision-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-3.3-70b-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-3.3-70b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-4-maverick-17b-128e-instruct
+  litellm_params:
+    model: nvidia_nim/meta/llama-4-maverick-17b-128e-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama-guard-4-12b
+  litellm_params:
+    model: nvidia_nim/meta/llama-guard-4-12b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: meta/llama2-70b
+  litellm_params:
+    model: nvidia_nim/meta/llama2-70b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: microsoft/kosmos-2
+  litellm_params:
+    model: nvidia_nim/microsoft/kosmos-2
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: microsoft/phi-3-vision-128k-instruct
+  litellm_params:
+    model: nvidia_nim/microsoft/phi-3-vision-128k-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: microsoft/phi-3.5-moe-instruct
+  litellm_params:
+    model: nvidia_nim/microsoft/phi-3.5-moe-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: minimaxai/minimax-m2.7
+  litellm_params:
+    model: nvidia_nim/minimaxai/minimax-m2.7
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: minimaxai/minimax-m3
+  litellm_params:
+    model: nvidia_nim/minimaxai/minimax-m3
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/codestral-22b-instruct-v0.1
+  litellm_params:
+    model: nvidia_nim/mistralai/codestral-22b-instruct-v0.1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/ministral-14b-instruct-2512
+  litellm_params:
+    model: nvidia_nim/mistralai/ministral-14b-instruct-2512
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mistral-7b-instruct-v0.3
+  litellm_params:
+    model: nvidia_nim/mistralai/mistral-7b-instruct-v0.3
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mistral-large
+  litellm_params:
+    model: nvidia_nim/mistralai/mistral-large
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mistral-large-2-instruct
+  litellm_params:
+    model: nvidia_nim/mistralai/mistral-large-2-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mistral-medium-3.5-128b
+  litellm_params:
+    model: nvidia_nim/mistralai/mistral-medium-3.5-128b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mistral-nemotron
+  litellm_params:
+    model: nvidia_nim/mistralai/mistral-nemotron
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mistral-small-4-119b-2603
+  litellm_params:
+    model: nvidia_nim/mistralai/mistral-small-4-119b-2603
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mixtral-8x22b-v0.1
+  litellm_params:
+    model: nvidia_nim/mistralai/mixtral-8x22b-v0.1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: mistralai/mixtral-8x7b-instruct-v0.1
+  litellm_params:
+    model: nvidia_nim/mistralai/mixtral-8x7b-instruct-v0.1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: moonshotai/kimi-k2.6
+  litellm_params:
+    model: nvidia_nim/moonshotai/kimi-k2.6
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nv-mistralai/mistral-nemo-12b-instruct
+  litellm_params:
+    model: nvidia_nim/nv-mistralai/mistral-nemo-12b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/ai-synthetic-video-detector
+  litellm_params:
+    model: nvidia_nim/nvidia/ai-synthetic-video-detector
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/cosmos-reason2-8b
+  litellm_params:
+    model: nvidia_nim/nvidia/cosmos-reason2-8b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 32768
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/embed-qa-4
+  litellm_params:
+    model: nvidia_nim/nvidia/embed-qa-4
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/gliner-pii
+  litellm_params:
+    model: nvidia_nim/nvidia/gliner-pii
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/ising-calibration-1-35b-a3b
+  litellm_params:
+    model: nvidia_nim/nvidia/ising-calibration-1-35b-a3b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/ising-calibration-1.5-31b
+  litellm_params:
+    model: nvidia_nim/nvidia/ising-calibration-1.5-31b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemoguard-8b-content-safety
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemoguard-8b-content-safety
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemoguard-8b-topic-control
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemoguard-8b-topic-control
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemotron-51b-instruct
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemotron-51b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemotron-70b-instruct
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemotron-nano-8b-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemotron-nano-8b-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemotron-safety-guard-8b-v3
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemotron-safety-guard-8b-v3
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.1-nemotron-ultra-253b-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.1-nemotron-ultra-253b-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.2-nv-embedqa-1b-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.2-nv-embedqa-1b-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.3-nemotron-super-49b-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.3-nemotron-super-49b-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-3.3-nemotron-super-49b-v1.5
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-nemotron-embed-1b-v2
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-nemotron-embed-1b-v2
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama-nemotron-embed-vl-1b-v2
+  litellm_params:
+    model: nvidia_nim/nvidia/llama-nemotron-embed-vl-1b-v2
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/llama3-chatqa-1.5-70b
+  litellm_params:
+    model: nvidia_nim/nvidia/llama3-chatqa-1.5-70b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/mistral-nemo-minitron-8b-8k-instruct
+  litellm_params:
+    model: nvidia_nim/nvidia/mistral-nemo-minitron-8b-8k-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemoretriever-parse
+  litellm_params:
+    model: nvidia_nim/nvidia/nemoretriever-parse
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-3-embed-1b
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3-embed-1b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-3-nano-30b-a3b
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3-nano-30b-a3b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-3-super-120b-a12b
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3-super-120b-a12b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-3-ultra-550b-a55b
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 32768
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-3.5-content-safety
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-3.5-content-safety
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-4-340b-instruct
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-4-340b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-4-340b-reward
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-4-340b-reward
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-mini-4b-instruct
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-mini-4b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 4096
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-nano-12b-v2-vl
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-nano-12b-v2-vl
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-nano-3-30b-a3b
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-nano-3-30b-a3b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nemotron-parse
+  litellm_params:
+    model: nvidia_nim/nvidia/nemotron-parse
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/neva-22b
+  litellm_params:
+    model: nvidia_nim/nvidia/neva-22b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nv-embed-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/nv-embed-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nv-embedcode-7b-v1
+  litellm_params:
+    model: nvidia_nim/nvidia/nv-embedcode-7b-v1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nv-embedqa-e5-v5
+  litellm_params:
+    model: nvidia_nim/nvidia/nv-embedqa-e5-v5
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nv-embedqa-mistral-7b-v2
+  litellm_params:
+    model: nvidia_nim/nvidia/nv-embedqa-mistral-7b-v2
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nvclip
+  litellm_params:
+    model: nvidia_nim/nvidia/nvclip
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/nvidia-nemotron-nano-9b-v2
+  litellm_params:
+    model: nvidia_nim/nvidia/nvidia-nemotron-nano-9b-v2
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/riva-translate-4b-instruct
+  litellm_params:
+    model: nvidia_nim/nvidia/riva-translate-4b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/riva-translate-4b-instruct-v1.1
+  litellm_params:
+    model: nvidia_nim/nvidia/riva-translate-4b-instruct-v1.1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: nvidia/vila
+  litellm_params:
+    model: nvidia_nim/nvidia/vila
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: openai/gpt-oss-120b
+  litellm_params:
+    model: nvidia_nim/openai/gpt-oss-120b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: openai/gpt-oss-20b
+  litellm_params:
+    model: nvidia_nim/openai/gpt-oss-20b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: poolside/laguna-xs-2.1
+  litellm_params:
+    model: nvidia_nim/poolside/laguna-xs-2.1
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: qwen/qwen3-next-80b-a3b-instruct
+  litellm_params:
+    model: nvidia_nim/qwen/qwen3-next-80b-a3b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: qwen/qwen3.5-397b-a17b
+  litellm_params:
+    model: nvidia_nim/qwen/qwen3.5-397b-a17b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: sarvamai/sarvam-m
+  litellm_params:
+    model: nvidia_nim/sarvamai/sarvam-m
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: snowflake/arctic-embed-l
+  litellm_params:
+    model: nvidia_nim/snowflake/arctic-embed-l
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: stepfun-ai/step-3.5-flash
+  litellm_params:
+    model: nvidia_nim/stepfun-ai/step-3.5-flash
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 256000
+    max_output_tokens: 16384
+    max_tokens: 16384
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: stepfun-ai/step-3.7-flash
+  litellm_params:
+    model: nvidia_nim/stepfun-ai/step-3.7-flash
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 256000
+    max_output_tokens: 16384
+    max_tokens: 16384
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: thinkingmachines/inkling
+  litellm_params:
+    model: nvidia_nim/thinkingmachines/inkling
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: upstage/solar-10.7b-instruct
+  litellm_params:
+    model: nvidia_nim/upstage/solar-10.7b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: writer/palmyra-creative-122b
+  litellm_params:
+    model: nvidia_nim/writer/palmyra-creative-122b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: writer/palmyra-fin-70b-32k
+  litellm_params:
+    model: nvidia_nim/writer/palmyra-fin-70b-32k
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: writer/palmyra-med-70b
+  litellm_params:
+    model: nvidia_nim/writer/palmyra-med-70b
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: writer/palmyra-med-70b-32k
+  litellm_params:
+    model: nvidia_nim/writer/palmyra-med-70b-32k
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: z-ai/glm-5.2
+  litellm_params:
+    model: nvidia_nim/z-ai/glm-5.2
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: zyphra/zamba2-7b-instruct
+  litellm_params:
+    model: nvidia_nim/zyphra/zamba2-7b-instruct
+    api_key: os.environ/NVIDIA_API_KEY
+    rpm: 40
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-opus-20240229
+  litellm_params:
+    model: openai/deepseek-ai/deepseek-r1-0528
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-opus-latest
+  litellm_params:
+    model: openai/deepseek-ai/deepseek-r1-0528
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-opus-4-6
+  litellm_params:
+    model: openai/deepseek-ai/deepseek-r1-0528
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: anthropic_opus
+  litellm_params:
+    model: openai/deepseek-ai/deepseek-r1-0528
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 128000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-5-sonnet-20241022
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-5-sonnet-latest
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-5-sonnet-20240620
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-sonnet-20240229
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-sonnet-4-6
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-sonnet-5
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: anthropic_sonnet
+  litellm_params:
+    model: openai/anthropic/claude-sonnet-5@default
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 200000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-5-haiku-20241022
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-5-haiku-latest
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-3-haiku-20240307
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 4096
+    max_tokens: 4096
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: claude-haiku-4-6
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
+- model_name: anthropic_haiku
+  litellm_params:
+    model: openai/google/gemini-3-flash-preview
+    api_base: https://mp-staging.kaggle.net/models/openapi
+    api_key: os.environ/KAGGLE_MODEL_PROXY_KEY
+    drop_params: true
+  model_info:
+    max_input_tokens: 1000000
+    max_output_tokens: 8192
+    max_tokens: 8192
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    mode: chat
 litellm_settings:
   num_retries: 5
   callbacks:
-    - custom_callbacks.proxy_handler_instance
-
+  - custom_callbacks.proxy_handler_instance

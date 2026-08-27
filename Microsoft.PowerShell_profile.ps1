@@ -76,6 +76,37 @@ function claude {
     $env:ANTHROPIC_AUTH_TOKEN = "sk-dummy"
     $env:ANTHROPIC_MODEL = $Model
 
+    # Resolve model native context window and output limits dynamically from single source of truth (get_model_specs.py)
+    $maxInputTokens = 200000
+    $maxOutputTokens = 8192
+    $specsScript = "$bridgeDir\get_model_specs.py"
+    if (Test-Path $specsScript) {
+        $rawSpecs = & $pythonExe $specsScript $Model 2>$null
+        $jsonStr = ($rawSpecs | Where-Object { $_ -match '\{.*\}' }) | Select-Object -Last 1
+        if ($jsonStr) {
+            try {
+                $parsedInfo = $jsonStr | ConvertFrom-Json
+                if ($parsedInfo.max_input_tokens) {
+                    $maxInputTokens = [int]$parsedInfo.max_input_tokens
+                }
+                if ($parsedInfo.max_output_tokens) {
+                    $maxOutputTokens = [int]$parsedInfo.max_output_tokens
+                }
+            } catch {}
+        }
+    }
+
+    # Set auto-compact token limits and context window enforcement for Claude Code CLI based on selected model's native capacity
+    $autoCompactLimit = [math]::Floor($maxInputTokens * 0.90)
+    $env:CLAUDE_CODE_MAX_CONTEXT_TOKENS = "$maxInputTokens"
+    $env:CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT = "1"
+    $env:CLAUDE_CODE_AUTO_COMPACT_WINDOW = "$maxInputTokens"
+    $env:CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "90"
+    $env:CLAUDE_AUTO_COMPACT_TOKEN_LIMIT = "$autoCompactLimit"
+    $env:CLAUDE_CODE_AUTO_COMPACT_TOKEN_LIMIT = "$autoCompactLimit"
+    $env:CLAUDE_CODE_WORKFLOW_SIZE_WARNING_TOKENS = "$autoCompactLimit"
+    $env:CLAUDE_CODE_MAX_OUTPUT_TOKENS = "$maxOutputTokens"
+
     # Timeouts and stability fixes
     $env:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"
     $env:DISABLE_NON_ESSENTIAL_MODEL_CALLS = "1"
@@ -87,8 +118,17 @@ function claude {
     # Disable PowerShell primary tool rollout
     $env:CLAUDE_CODE_USE_POWERSHELL_TOOL = "0" 
 
-    Write-Host "Launching Claude Code via Git Bash using model: $Model (Proxy Port: $port)" -ForegroundColor Green
+    Write-Host "Launching Claude Code via Git Bash using model: $Model (Proxy Port: $port | Context: ${maxInputTokens} tokens | AutoCompact Limit: ${autoCompactLimit} tokens)" -ForegroundColor Green
 
-    # 4. Execute claude CLI (server stays running in background)
-    & claude.exe $RemainingArgs
+    # 4. Execute claude CLI with --model flag
+    $cliArgs = @()
+    if ($Model -and ($RemainingArgs -notcontains "--model")) {
+        $cliArgs += @("--model", $Model)
+    }
+    if ($RemainingArgs) {
+        $cliArgs += $RemainingArgs
+    }
+
+    & claude.exe @cliArgs
 }
+
