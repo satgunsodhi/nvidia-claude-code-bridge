@@ -76,24 +76,18 @@ function claude {
     $env:ANTHROPIC_AUTH_TOKEN = "sk-dummy"
     $env:ANTHROPIC_MODEL = $Model
 
-    # Resolve model native context window and output limits dynamically from single source of truth (get_model_specs.py)
+    # Resolve model native context window and output limits dynamically from litellm config
     $maxInputTokens = 200000
     $maxOutputTokens = 8192
-    $specsScript = "$bridgeDir\get_model_specs.py"
-    if (Test-Path $specsScript) {
-        $rawSpecs = & $pythonExe $specsScript $Model 2>$null
-        $jsonStr = ($rawSpecs | Where-Object { $_ -match '\{.*\}' }) | Select-Object -Last 1
-        if ($jsonStr) {
-            try {
-                $parsedInfo = $jsonStr | ConvertFrom-Json
-                if ($parsedInfo.max_input_tokens) {
-                    $maxInputTokens = [int]$parsedInfo.max_input_tokens
-                }
-                if ($parsedInfo.max_output_tokens) {
-                    $maxOutputTokens = [int]$parsedInfo.max_output_tokens
-                }
-            } catch {}
-        }
+    $pyCmd = 'import sys, litellm, custom_callbacks, json; info = litellm.get_model_info(sys.argv[1]); print(json.dumps(info))'
+    $rawSpecs = & $pythonExe -c $pyCmd $Model 2>$null
+    $jsonStr = ($rawSpecs | Where-Object { $_ -match '^\{.*\}$' }) | Select-Object -Last 1
+    if ($jsonStr) {
+        try {
+            $parsedInfo = $jsonStr | ConvertFrom-Json
+            if ($parsedInfo.max_input_tokens) { $maxInputTokens = [int]$parsedInfo.max_input_tokens }
+            if ($parsedInfo.max_output_tokens) { $maxOutputTokens = [int]$parsedInfo.max_output_tokens }
+        } catch {}
     }
 
     # Set auto-compact token limits and context window enforcement for Claude Code CLI based on selected model's native capacity
