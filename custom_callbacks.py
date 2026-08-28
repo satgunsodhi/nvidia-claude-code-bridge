@@ -40,38 +40,19 @@ MODEL_CONTEXT_WINDOWS = {
     "deepseek-ai/deepseek-r1-0528": 128000,
     "deepseek-ai/deepseek-r1": 128000,
     "deepseek-ai/deepseek-v3": 128000,
-    "deepseek-ai/deepseek-v4-pro": 256000,
-    "deepseek-ai/deepseek-v4-flash": 128000,
-
-    # OpenAI GPT-4o / GPT-4.5 / GPT-5 / GPT-oss series
-    "openai/gpt-5.4-nano-2026-03-17": 200000,
-    "openai/gpt-oss-120b": 128000,
-    "openai/gpt-oss-20b": 128000,
-
-    # Qwen 2.5 / 3 / 3.5 series: 128k tokens
-    "qwen/qwen3-next-80b-a3b-instruct": 128000,
-    "qwen/qwen3.5-397b-a17b": 128000,
-
-    # Moonshot Kimi K2.6 / K1.5: 200k tokens
-    "moonshotai/kimi-k2.6": 200000,
-
-    # StepFun Step 3.5/3.7 Flash: 256k tokens
-    "stepfun-ai/step-3.7-flash": 256000,
-    "stepfun-ai/step-3.5-flash": 256000,
-
-    # MiniMax M3 / M2.7: 1M tokens
-    "minimaxai/minimax-m3": 1000000,
-    "minimaxai/minimax-m2.7": 1000000,
-
-    # Llama 3.1 / 3.2 / 3.3 / 4 series: 128k tokens
-    "meta/llama-3.3-70b-instruct": 128000,
+    "deepseek-ai/deepseek-v4-pro-0813": 256000,
+    "deepseek-ai/deepseek-v4-flash-0731": 128000,
+    "moonshotai/kimi-k3": 200000,
+    "meta/muse-glimmer-30b": 128000,
+    "meta/llama-3.1-405b-instruct": 128000,
     "meta/llama-3.1-70b-instruct": 128000,
     "meta/llama-3.1-8b-instruct": 128000,
-
-    # Mistral Large 2 / Medium 3.5 / Small 4: 128k tokens
     "mistralai/mistral-large-2-instruct": 128000,
-
-    # NVIDIA Nemotron models
+    "mistralai/mixtral-8x22b-v0.1": 64000,
+    "nv-mistralai/mistral-nemo-12b-instruct": 128000,
+    "nvidia/nemotron-4-340b-instruct": 128000,
+    "nvidia/llama-3.1-nemotron-70b-instruct": 128000,
+    "nvidia/nemotron-3.5-lightning-30b-a3b": 128000,
     "nvidia/nemotron-3-super-120b-a12b": 128000,
     "nvidia/nemotron-3-ultra-550b-a55b": 32768,
     "nvidia/llama-3.3-nemotron-super-49b-v1": 128000,
@@ -199,8 +180,6 @@ except Exception:
     pass
 
 
-
-
 class AsyncRateLimiter:
     def __init__(self, rpm: int = 40):
         self.rpm = rpm
@@ -315,15 +294,199 @@ class CustomRateLimitLogger(CustomLogger):
                     data["model"] = "nvidia-fast-agent"
                     model_name = "nvidia-fast-agent"
 
-            # --- Dynamic Kaggle Credential Injection ---
+            # --- Message Role & Content Sanitization (Fixing "unexpected role: " 400 errors) ---
+            messages = data.get("messages", [])
+            if messages and isinstance(messages, list):
+                valid_non_system_roles = {"user", "assistant", "tool", "function"}
+                system_prompts = []
+                non_system_messages = []
+
+                for msg in messages:
+                    if not isinstance(msg, dict):
+                        if hasattr(msg, "model_dump"):
+                            msg = msg.model_dump(exclude_unset=True)
+                        elif hasattr(msg, "dict"):
+                            msg = msg.dict(exclude_unset=True)
+                        else:
+                            try:
+                                msg = dict(msg)
+                            except Exception:
+                                continue
+                    
+                    role = msg.get("role")
+                    
+                    # Normalize developer role (OpenAI format) to system
+                    if role == "developer":
+                        role = "system"
+                    
+                    # Extract system prompts from anywhere in the message list
+                    if role == "system":
+                        content = msg.get("content")
+                        if content:
+                            if isinstance(content, str):
+                                system_prompts.append(content)
+                            elif isinstance(content, list):
+                                text_parts = [b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"]
+                                if text_parts:
+                                    system_prompts.append("\n".join(text_parts))
+                                else:
+                                    system_prompts.append(str(content))
+                        continue
+                    
+                    content = msg.get("content")
+                    # Handle Anthropic-style blocks that LiteLLM might have failed to translate
+                    if isinstance(content, list):
+                        if role == "assistant":
+                            new_content = ""
+                            tool_calls = []
+                            for block in content:
+                                if not isinstance(block, dict):
+                                    continue
+                                btype = block.get("type")
+                                if btype == "text":
+                                    new_content += block.get("text", "")
+                                elif btype == "thinking":
+                                    new_content += f"<thinking>\n{block.get('thinking', '')}\n</thinking>\n"
+                                elif btype == "tool_use":
+                                    tool_calls.append({
+                                        "id": block.get("id"),
+                                        "type": "function",
+                                        "function": {
+                                            "name": block.get("name"),
+                                            "arguments": json.dumps(block.get("input", {})) if isinstance(block.get("input"), dict) else str(block.get("input", "{}"))
+                                        }
+                                    })
+                                elif btype == "image_url":
+                                    pass # Handled normally if we just keep the list, but since we modify it, we might break multimodal.
+                            
+                            # Only overwrite if we actually found Anthropic specific blocks
+                            has_anthropic_blocks = any(isinstance(b, dict) and b.get("type") in ("thinking", "tool_use") for b in content)
+                            if has_anthropic_blocks:
+                                msg["content"] = new_content.strip() or None
+                                if tool_calls:
+                                    msg["tool_calls"] = msg.get("tool_calls", []) + tool_calls
+                        
+                        elif role == "user":
+                            has_tool_result = any(isinstance(b, dict) and b.get("type") == "tool_result" for b in content)
+                            if has_tool_result:
+                                text_parts = []
+                                tool_msgs = []
+                                for block in content:
+                                    if not isinstance(block, dict):
+                                        continue
+                                    btype = block.get("type")
+                                    if btype == "text":
+                                        text_parts.append(block.get("text", ""))
+                                    elif btype == "tool_result":
+                                        tm_content = block.get("content", "")
+                                        if isinstance(tm_content, list):
+                                            # extract text from nested content
+                                            tm_content = "".join([b.get("text", "") for b in tm_content if isinstance(b, dict) and b.get("type") == "text"])
+                                        tool_msgs.append({
+                                            "role": "tool",
+                                            "tool_call_id": block.get("tool_use_id"),
+                                            "content": str(tm_content)
+                                        })
+                                
+                                # Add the text part as a user message if it exists
+                                if text_parts:
+                                    msg["content"] = "\n".join(text_parts)
+                                    msg["role"] = "user"
+                                    non_system_messages.append(msg)
+                                
+                                # Add the tool messages
+                                for tm in tool_msgs:
+                                    non_system_messages.append(tm)
+                                continue # Skip the default append below
+
+                    # Fix invalid, empty, missing, or unsupported roles for non-system messages
+                    role = msg.get("role")
+                    if not role or not isinstance(role, str) or role not in valid_non_system_roles:
+                        role = "user"
+                        msg["role"] = role
+                    
+                    # Ensure content is non-empty
+                    content = msg.get("content")
+                    if content is None or content == "" or (isinstance(content, list) and len(content) == 0):
+                        if not msg.get("tool_calls"):
+                            msg["content"] = " "
+                    
+                    non_system_messages.append(msg)
+                
+                cleaned_messages = list(non_system_messages)
+                
+                # Consolidate system prompts into top-level system/instructions and prepend to first user message
+                if system_prompts:
+                    combined_system_text = "\n\n".join(system_prompts)
+                    data["system"] = combined_system_text
+                    data["instructions"] = combined_system_text
+                    if "litellm_params" in data and isinstance(data["litellm_params"], dict):
+                        data["litellm_params"]["system"] = combined_system_text
+                        data["litellm_params"]["instructions"] = combined_system_text
+                    
+                    # Prepend system prompt context to the first user message
+                    if cleaned_messages:
+                        first_msg = cleaned_messages[0]
+                        if first_msg.get("role") == "user":
+                            orig_content = first_msg.get("content", "")
+                            sys_prefix = f"<system_instructions>\n{combined_system_text}\n</system_instructions>\n\n"
+                            if isinstance(orig_content, str):
+                                first_msg["content"] = sys_prefix + orig_content
+                            elif isinstance(orig_content, list):
+                                first_msg["content"] = [{"type": "text", "text": sys_prefix}] + orig_content
+                        else:
+                            cleaned_messages.insert(0, {"role": "user", "content": f"<system_instructions>\n{combined_system_text}\n</system_instructions>"})
+                    else:
+                        cleaned_messages.append({"role": "user", "content": f"<system_instructions>\n{combined_system_text}\n</system_instructions>"})
+                
+                data["messages"] = cleaned_messages
+                if "litellm_params" in data and isinstance(data["litellm_params"], dict):
+                    data["litellm_params"]["messages"] = cleaned_messages
+                
+                import json
+                try:
+                    with open(r"c:\Users\Satgu\Documents\VS Code\nvidia-claude-code-bridge\kaggle_payload.txt", "w") as f:
+                        for idx, m in enumerate(data['messages']):
+                            # Convert m to dict if needed
+                            if hasattr(m, 'model_dump'):
+                                m = m.model_dump()
+                            elif hasattr(m, 'dict'):
+                                m = m.dict()
+                            elif not isinstance(m, dict):
+                                m = dict(m)
+                            f.write(f"Message {idx}: Role='{m.get('role')}' | Content={str(m.get('content'))[:100]}\n")
+                except Exception as e:
+                    pass
+
+
+            # --- Target Provider Auth Injection ---
             api_base = data.get("api_base") or (data.get("litellm_params", {}).get("api_base") if isinstance(data.get("litellm_params"), dict) else "") or ""
-            is_kaggle_target = (
-                "kaggle" in model_name.lower() 
-                or "kaggle" in str(api_base).lower() 
-                or "mp-staging.kaggle.net" in str(api_base)
-                or (primary_provider == "kaggle" and not model_name.startswith("nvidia"))
-            )
             
+            # List of model prefixes or exact names known to be hosted on NVIDIA NIM
+            nvidia_catalog_prefixes = (
+                "nvidia", "nvidia_nim", "nv-mistralai/", "mistralai/", "meta/",
+                "google/gemma", "google/codegemma", "google/deplot", "google/diffusiongemma", "google/recurrentgemma",
+                "deepseek-ai/", "qwen/", "stepfun-ai/", "moonshotai/", "minimaxai/", "z-ai/",
+                "abacusai/", "01-ai/", "adept/", "ai21labs/", "aisingapore/", "baai/",
+                "bigcode/", "bytedance/", "databricks/", "ibm/", "microsoft/", "poolside/",
+                "sarvamai/", "snowflake/", "upstage/", "writer/", "zyphra/"
+            )
+
+            is_gemini = "gemini" in model_name.lower()
+
+            is_nvidia_target = not is_gemini and (
+                any(model_name.lower().startswith(p) for p in nvidia_catalog_prefixes)
+                or "nvidia_nim" in str(api_base).lower()
+                or "integrate.api.nvidia.com" in str(api_base)
+            )
+
+            is_kaggle_target = is_gemini or (not is_nvidia_target and (
+                model_name.startswith("kaggle")
+                or "kaggle" in str(api_base).lower()
+                or "mp-staging.kaggle.net" in str(api_base)
+                or primary_provider == "kaggle"
+            ))
+
             if is_kaggle_target:
                 if not kaggle_auth_manager.is_token_valid():
                     kaggle_auth_manager.refresh_credentials()
@@ -335,10 +498,19 @@ class CustomRateLimitLogger(CustomLogger):
                     data["api_key"] = active_key
                     if "litellm_params" in data and isinstance(data["litellm_params"], dict):
                         data["litellm_params"]["api_key"] = active_key
-                        if not data["litellm_params"].get("api_base"):
-                            data["litellm_params"]["api_base"] = active_url
+                        data["litellm_params"]["api_base"] = active_url
                     os.environ["KAGGLE_MODEL_PROXY_KEY"] = active_key
                     os.environ["KAGGLE_MODEL_PROXY_URL"] = active_url
+            elif is_nvidia_target:
+                nvidia_key = os.getenv("NVIDIA_API_KEY", "").strip()
+                if nvidia_key:
+                    data["api_key"] = nvidia_key
+                    if "litellm_params" in data and isinstance(data["litellm_params"], dict):
+                        data["litellm_params"]["api_key"] = nvidia_key
+                        if "api_base" in data["litellm_params"] and "kaggle" in str(data["litellm_params"]["api_base"]).lower():
+                            del data["litellm_params"]["api_base"]
+                    if "api_base" in data and "kaggle" in str(data["api_base"]).lower():
+                        del data["api_base"]
             # -------------------------------------------
 
             # --- Kimi K2.6 Overrides ---
